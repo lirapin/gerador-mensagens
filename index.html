@@ -637,400 +637,941 @@
         </footer>
     </div>
 
-<script>
-// =============================================
-// CONFIGURAÇÃO DO JSONBIN.IO - EDITAR AQUI!
-// =============================================
-const JSONBIN_CONFIG = {
-    binId: '690480d2ae596e708f39dcad',
-    accessKey: '$2a$10$iCHPT/M2gqtqeGsBZ/AdCeE.Y/yihLCb5IKZbACZrafL8/.fIuRAW'
-};
+    <script>
+        // =============================================
+        // CONFIGURAÇÃO DO JSONBIN.IO - EDITAR AQUI!
+        // =============================================
+        const JSONBIN_CONFIG = {
+            binId: '690480d2ae596e708f39dcad',
+            accessKey: '$2a$10$iCHPT/M2gqtqeGsBZ/AdCeE.Y/yihLCb5IKZbACZrafL8/.fIuRAW'
+        };
 
-// =============================================
-// SERVIÇO JSONBIN.IO (COMPARTILHAMENTO)
-// =============================================
-class JSONBinService {
-    constructor() {
-        this.baseUrl = 'https://api.jsonbin.io/v3/b';
-    }
+        // =============================================
+        // SERVIÇO JSONBIN.IO (COMPARTILHAMENTO)
+        // =============================================
+        class JSONBinService {
+            constructor() {
+                this.baseUrl = 'https://api.jsonbin.io/v3/b';
+            }
 
-    async salvarIncidente(incidenteId, tipo, dados) {
-        try {
-            const todosIncidentes = await this.buscarTodosIncidentes();
-            const incidenteExistente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
-            
-            if (incidenteExistente) {
-                incidenteExistente.dados = dados;
-                incidenteExistente.data_atualizacao = new Date().toISOString();
-            } else {
-                todosIncidentes.push({
-                    incidente_id: incidenteId,
-                    tipo: tipo,
-                    dados: dados,
-                    criado_por: this.getUsuario(),
-                    data_criacao: new Date().toISOString(),
-                    data_atualizacao: new Date().toISOString()
+            async salvarIncidente(incidenteId, tipo, dados) {
+                try {
+                    const todosIncidentes = await this.buscarTodosIncidentes();
+                    const incidenteExistente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
+                    
+                    if (incidenteExistente) {
+                        incidenteExistente.dados = dados;
+                        incidenteExistente.data_atualizacao = new Date().toISOString();
+                    } else {
+                        todosIncidentes.push({
+                            incidente_id: incidenteId,
+                            tipo: tipo,
+                            dados: dados,
+                            criado_por: this.getUsuario(),
+                            data_criacao: new Date().toISOString(),
+                            data_atualizacao: new Date().toISOString()
+                        });
+                    }
+                    
+                    await this.salvarTodosIncidentes(todosIncidentes);
+                    return true;
+                } catch (error) {
+                    console.error('Erro JSONBin:', error);
+                    this.salvarLocalmente(incidenteId, tipo, dados);
+                    throw error;
+                }
+            }
+
+            async carregarIncidente(incidenteId) {
+                try {
+                    const todosIncidentes = await this.buscarTodosIncidentes();
+                    const incidente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
+                    if (!incidente) throw new Error('Incidente não encontrado');
+                    return incidente;
+                } catch (error) {
+                    console.error('Erro JSONBin:', error);
+                    return this.carregarLocalmente(incidenteId);
+                }
+            }
+
+            async listarIncidentesAtivos() {
+                try {
+                    return await this.buscarTodosIncidentes();
+                } catch (error) {
+                    console.error('Erro JSONBin:', error);
+                    return this.listarLocalmente();
+                }
+            }
+
+            async excluirIncidente(incidenteId) {
+                try {
+                    const todosIncidentes = await this.buscarTodosIncidentes();
+                    const novosIncidentes = todosIncidentes.filter(inc => inc.incidente_id !== incidenteId);
+                    await this.salvarTodosIncidentes(novosIncidentes);
+                    return true;
+                } catch (error) {
+                    console.error('Erro JSONBin:', error);
+                    this.excluirLocalmente(incidenteId);
+                    throw error;
+                }
+            }
+
+            async buscarTodosIncidentes() {
+                const response = await fetch(`${this.baseUrl}/${JSONBIN_CONFIG.binId}/latest`, {
+                    headers: {
+                        'X-Master-Key': JSONBIN_CONFIG.accessKey,
+                        'Content-Type': 'application/json'
+                    }
                 });
+                if (!response.ok) throw new Error('Erro ao buscar incidentes');
+                const data = await response.json();
+                return data.record.incidentes || [];
+            }
+
+            async salvarTodosIncidentes(incidentes) {
+                const response = await fetch(`${this.baseUrl}/${JSONBIN_CONFIG.binId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'X-Master-Key': JSONBIN_CONFIG.accessKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ incidentes: incidentes })
+                });
+                if (!response.ok) throw new Error('Erro ao salvar incidentes');
+                return await response.json();
+            }
+
+            salvarLocalmente(incidenteId, tipo, dados) {
+                const incidentes = JSON.parse(localStorage.getItem('incidentes_locais') || '{}');
+                incidentes[incidenteId] = { tipo, dados, dataCriacao: new Date().toISOString() };
+                localStorage.setItem('incidentes_locais', JSON.stringify(incidentes));
+            }
+
+            carregarLocalmente(incidenteId) {
+                const incidentes = JSON.parse(localStorage.getItem('incidentes_locais') || '{}');
+                if (incidentes[incidenteId]) {
+                    return { incidente_id: incidenteId, ...incidentes[incidenteId] };
+                }
+                throw new Error('Incidente não encontrado localmente');
+            }
+
+            listarLocalmente() {
+                const incidentes = JSON.parse(localStorage.getItem('incidentes_locais') || '{}');
+                return Object.keys(incidentes).map(id => ({
+                    incidente_id: id,
+                    ...incidentes[id]
+                }));
+            }
+
+            excluirLocalmente(incidenteId) {
+                const incidentes = JSON.parse(localStorage.getItem('incidentes_locais') || '{}');
+                delete incidentes[incidenteId];
+                localStorage.setItem('incidentes_locais', JSON.stringify(incidentes));
+            }
+
+            getUsuario() {
+                let usuario = localStorage.getItem('usuario_incidentes');
+                if (!usuario) {
+                    usuario = prompt('Digite seu nome para identificar seus incidentes:') || 'Usuário';
+                    localStorage.setItem('usuario_incidentes', usuario);
+                }
+                return usuario;
+            }
+        }
+
+        const jsonBinService = new JSONBinService();
+
+        // =============================================
+        // VARIÁVEIS GLOBAIS
+        // =============================================
+        let incidentesAtivos = {};
+        let incidenteAtual = null;
+
+        // =============================================
+        // FUNÇÕES PRINCIPAIS MODIFICADAS
+        // =============================================
+
+        async function salvarIncidente() {
+            const tipoMensagem = document.getElementById('tipoMensagem').value;
+            if (!tipoMensagem) {
+                alert('Por favor, selecione um tipo de mensagem primeiro');
+                return;
+            }
+
+            let incidenteId = document.getElementById('incidenteId').value.trim();
+            if (!incidenteId) {
+                incidenteId = prompt('Insira o número do incidente:');
+                if (!incidenteId) return;
+                document.getElementById('incidenteId').value = incidenteId;
+            }
+
+            const dados = coletarDadosFormulario(tipoMensagem);
+            if (!dados) return;
+
+            try {
+                await jsonBinService.salvarIncidente(incidenteId, tipoMensagem, dados);
+                incidenteAtual = incidenteId;
+                await atualizarListaIncidentes();
+                alert('✅ Incidente salvo e COMPARTILHADO com todos os usuários!');
+            } catch (error) {
+                alert('⚠️ Incidente salvo localmente (sem compartilhamento)');
+            }
+        }
+
+        async function carregarIncidente() {
+            const incidenteId = document.getElementById('incidenteId').value.trim();
+            if (!incidenteId) {
+                alert('Insira o número do incidente!');
+                return;
+            }
+            await carregarIncidentePorId(incidenteId);
+        }
+
+        async function carregarIncidentePorId(incidenteId) {
+            try {
+                const incidente = await jsonBinService.carregarIncidente(incidenteId);
+                document.getElementById('incidenteId').value = incidente.incidente_id;
+                document.getElementById('tipoMensagem').value = incidente.tipo;
+                mostrarFormulario();
+
+                if (incidente.tipo === 'rompimento') {
+                    document.getElementById('topologia').value = incidente.dados.topologia || '';
+                    document.getElementById('incidente').value = incidente.dados.incidente || '';
+                    document.getElementById('cidade').value = incidente.dados.cidade || '';
+                    document.getElementById('distrito').value = incidente.dados.distrito || '';
+                    document.getElementById('impacto').value = incidente.dados.impacto || '';
+                    document.getElementById('base').value = incidente.dados.base || '';
+                    document.getElementById('rec').value = incidente.dados.rec || '';
+                    document.getElementById('ral').value = incidente.dados.ral || '';
+                    document.getElementById('abertura').value = incidente.dados.abertura || '';
+                    document.getElementById('previsao').value = incidente.dados.previsao || '';
+                    document.getElementById('acionamento').value = incidente.dados.acionamento || '';
+                } else if (incidente.tipo === 'manobra') {
+                    document.getElementById('topologiaManobra').value = incidente.dados.topologiaManobra || '';
+                    document.getElementById('ticketManobra').value = incidente.dados.ticketManobra || '';
+                    document.getElementById('incidenteManobra').value = incidente.dados.incidenteManobra || '';
+                    document.getElementById('cidadeManobra').value = incidente.dados.cidadeManobra || '';
+                    document.getElementById('distritoManobra').value = incidente.dados.distritoManobra || '';
+                    document.getElementById('impactoManobra').value = incidente.dados.impactoManobra || '';
+                    document.getElementById('baseManobra').value = incidente.dados.baseManobra || '';
+                    document.getElementById('responsavelManobra').value = incidente.dados.responsavelManobra || '';
+                    document.getElementById('executorManobra').value = incidente.dados.executorManobra || '';
+                    document.getElementById('enderecoManobra').value = incidente.dados.enderecoManobra || '';
+                    document.getElementById('propostoManobra').value = incidente.dados.propostoManobra || '';
+                }
+
+                incidenteAtual = incidente.incidente_id;
+                await atualizarListaIncidentes();
+                alert('✅ Incidente carregado do servidor compartilhado!');
+            } catch (error) {
+                alert('❌ Erro ao carregar incidente: ' + error.message);
+            }
+        }
+
+        async function atualizarListaIncidentes() {
+            const incidentList = document.getElementById('incidentList');
+            incidentList.innerHTML = '<div class="no-incidents">Carregando incidentes...</div>';
+
+            try {
+                const incidentesRemotos = await jsonBinService.listarIncidentesAtivos();
+                
+                if (incidentesRemotos.length === 0) {
+                    incidentList.innerHTML = '<div class="no-incidents">Nenhum incidente ativo</div>';
+                    return;
+                }
+
+                incidentList.innerHTML = '';
+                incidentesRemotos.forEach(incidente => {
+                    const item = document.createElement('div');
+                    item.className = `incident-item ${incidenteAtual === incidente.incidente_id ? 'active' : ''}`;
+                    item.innerHTML = `
+                        <div>
+                            <div class="incident-id">${incidente.incidente_id} 
+                                <small style="color: #666;">(por ${incidente.criado_por})</small>
+                            </div>
+                            <div class="incident-info">${incidente.tipo} - ${incidente.dados.incidente || incidente.dados.incidenteManobra || 'Sem nome'}</div>
+                            <div class="incident-info" style="font-size: 11px;">
+                                Atualizado: ${new Date(incidente.data_atualizacao || incidente.dataCriacao).toLocaleString()}
+                            </div>
+                        </div>
+                        <button class="delete-incident" onclick="excluirIncidente('${incidente.incidente_id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    item.addEventListener('click', (e) => {
+                        if (!e.target.closest('.delete-incident')) {
+                            carregarIncidentePorId(incidente.incidente_id);
+                        }
+                    });
+                    incidentList.appendChild(item);
+                });
+            } catch (error) {
+                incidentList.innerHTML = '<div class="no-incidents">Erro ao carregar incidentes</div>';
+            }
+        }
+
+        async function excluirIncidente(incidenteId) {
+            if (confirm('Tem certeza que deseja excluir o incidente ' + incidenteId + '?')) {
+                try {
+                    await jsonBinService.excluirIncidente(incidenteId);
+                    if (incidenteAtual === incidenteId) {
+                        incidenteAtual = null;
+                        document.getElementById('incidenteId').value = '';
+                        limparFormularios();
+                    }
+                    await atualizarListaIncidentes();
+                    alert('✅ Incidente excluído com sucesso!');
+                } catch (error) {
+                    alert('⚠️ Incidente excluído apenas localmente');
+                }
+            }
+        }
+
+        // =============================================
+        // FUNÇÕES ORIGINAIS
+        // =============================================
+
+        function coletarDadosFormulario(tipo) {
+            if (tipo === 'rompimento') {
+                return {
+                    topologia: document.getElementById('topologia').value,
+                    incidente: document.getElementById('incidente').value,
+                    cidade: document.getElementById('cidade').value,
+                    distrito: document.getElementById('distrito').value,
+                    impacto: document.getElementById('impacto').value,
+                    base: document.getElementById('base').value,
+                    rec: document.getElementById('rec').value,
+                    ral: document.getElementById('ral').value,
+                    abertura: document.getElementById('abertura').value,
+                    previsao: document.getElementById('previsao').value,
+                    acionamento: document.getElementById('acionamento').value
+                };
+            } else if (tipo === 'manobra') {
+                return {
+                    topologiaManobra: document.getElementById('topologiaManobra').value,
+                    ticketManobra: document.getElementById('ticketManobra').value,
+                    incidenteManobra: document.getElementById('incidenteManobra').value,
+                    cidadeManobra: document.getElementById('cidadeManobra').value,
+                    distritoManobra: document.getElementById('distritoManobra').value,
+                    impactoManobra: document.getElementById('impactoManobra').value,
+                    baseManobra: document.getElementById('baseManobra').value,
+                    responsavelManobra: document.getElementById('responsavelManobra').value,
+                    executorManobra: document.getElementById('executorManobra').value,
+                    enderecoManobra: document.getElementById('enderecoManobra').value,
+                    propostoManobra: document.getElementById('propostoManobra').value
+                };
+            }
+            return null;
+        }
+
+        function validarCampoNumerico(input) {
+            input.value = input.value.replace(/[^0-9]/g, '');
+        }
+
+        function mostrarFormulario() {
+            const tipo = document.getElementById('tipoMensagem').value;
+            document.getElementById('formRompimento').classList.add('hidden');
+            document.getElementById('formManobra').classList.add('hidden');
+            document.getElementById('outputContainer').classList.add('hidden');
+            
+            if (tipo === 'rompimento') {
+                document.getElementById('formRompimento').classList.remove('hidden');
+            } else if (tipo === 'manobra') {
+                document.getElementById('formManobra').classList.remove('hidden');
+            }
+        }
+
+        function limparFormularios() {
+            document.getElementById('topologia').value = '';
+            document.getElementById('incidente').value = '';
+            document.getElementById('cidade').value = '';
+            document.getElementById('distrito').value = '';
+            document.getElementById('impacto').value = '';
+            document.getElementById('base').value = '';
+            document.getElementById('rec').value = '';
+            document.getElementById('ral').value = '';
+            document.getElementById('abertura').value = '';
+            document.getElementById('previsao').value = '';
+            document.getElementById('acionamento').value = '';
+            document.getElementById('status').value = '';
+            document.getElementById('statusCampos').innerHTML = '';
+
+            document.getElementById('topologiaManobra').value = '';
+            document.getElementById('ticketManobra').value = '';
+            document.getElementById('incidenteManobra').value = '';
+            document.getElementById('cidadeManobra').value = '';
+            document.getElementById('distritoManobra').value = '';
+            document.getElementById('impactoManobra').value = '';
+            document.getElementById('baseManobra').value = '';
+            document.getElementById('responsavelManobra').value = '';
+            document.getElementById('executorManobra').value = '';
+            document.getElementById('enderecoManobra').value = '';
+            document.getElementById('propostoManobra').value = '';
+            document.getElementById('statusManobra').value = '';
+            document.getElementById('statusCamposManobra').innerHTML = '';
+        }
+
+        function atualizarCamposStatus() {
+            const tipo = document.getElementById('status').value;
+            const statusCampos = document.getElementById('statusCampos');
+            statusCampos.innerHTML = '';
+
+            if (tipo === 'inicial') {
+                statusCampos.innerHTML = `
+                    <div class="form-group">
+                        <label>Incidente acionado?</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="acionado_sim" name="acionado" value="sim">
+                                <label for="acionado_sim">Sim</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="acionado_nao" name="acionado" value="nao">
+                                <label for="acionado_nao">Não</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Escalonamento?</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="esc_ponto_focal" onchange="toggleEscalonamentoInput('ponto_focal')">
+                                <label for="esc_ponto_focal">Ponto Focal</label>
+                            </div>
+                            <input type="text" id="esc_ponto_focal_nome" class="escalonamento-input hidden" placeholder="Nome do Ponto Focal">
+                            
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="esc_supervisor" onchange="toggleEscalonamentoInput('supervisor')">
+                                <label for="esc_supervisor">Supervisor</label>
+                            </div>
+                            <input type="text" id="esc_supervisor_nome" class="escalonamento-input hidden" placeholder="Nome do Supervisor">
+                            
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="esc_coordenador" onchange="toggleEscalonamentoInput('coordenador')">
+                                <label for="esc_coordenador">Coordenador</label>
+                            </div>
+                            <input type="text" id="esc_coordenador_nome" class="escalonamento-input hidden" placeholder="Nome do Coordenador">
+                            
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="esc_gerente" onchange="toggleEscalonamentoInput('gerente')">
+                                <label for="esc_gerente">Gerente</label>
+                            </div>
+                            <input type="text" id="esc_gerente_nome" class="escalonamento-input hidden" placeholder="Nome do Gerente">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Scan realizado?</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="scan_sim" name="scan" value="sim" onchange="mostrarCampoScan()">
+                                <label for="scan_sim">Sim</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="scan_nao" name="scan" value="nao" onchange="mostrarCampoScan()">
+                                <label for="scan_nao">Não</label>
+                            </div>
+                        </div>
+                        <div id="campoScan" class="conditional-field hidden"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Incidente ficará com equipe da manhã?</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="equipe_sim" name="equipe" value="sim" onchange="mostrarCampoEquipe()">
+                                <label for="equipe_sim">Sim</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="equipe_nao" name="equipe" value="nao" onchange="mostrarCampoEquipe()">
+                                <label for="equipe_nao">Não</label>
+                            </div>
+                        </div>
+                        <div id="campoEquipe" class="conditional-field hidden"></div>
+                    </div>
+                `;
+            } else if (tipo === 'atualizacao') {
+                statusCampos.innerHTML = `
+                    <div class="form-group">
+                        <label for="enderecoDano">Endereço do Dano:</label>
+                        <input type="text" id="enderecoDano">
+                    </div>
+                    <div class="form-group">
+                        <label for="causaDano">Causa do Dano:</label>
+                        <input type="text" id="causaDano">
+                    </div>
+                    <div class="form-group">
+                        <label for="cabosAfetados">Cabos Afetados:</label>
+                        <input type="text" id="cabosAfetados">
+                    </div>
+                    <div class="form-group">
+                        <label>Equipe percorrendo rota?</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="percorrendo_sim" name="percorrendo" value="sim">
+                                <label for="percorrendo_sim">Sim</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="percorrendo_nao" name="percorrendo" value="nao">
+                                <label for="percorrendo_nao">Não</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Equipe avaliando infra?</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="avaliando_sim" name="avaliando" value="sim">
+                                <label for="avaliando_sim">Sim</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="avaliando_nao" name="avaliando" value="nao">
+                                <label for="avaliando_nao">Não</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="validado">Percentual de Nodes Normalizados (%):</label>
+                        <input type="text" id="validado">
+                    </div>
+                `;
+            } else if (tipo === 'encerramento') {
+                statusCampos.innerHTML = `
+                    <div class="form-group">
+                        <label for="encerramento">Data e Hora de Encerramento:</label>
+                        <input type="text" id="encerramento" placeholder="dd/mm/aaaa hh:mm">
+                        <div class="date-format">Formato obrigatório: dd/mm/aaaa hh:mm</div>
+                        <div class="error-message" id="encerramento-error">Formato incorreto. Use: dd/mm/aaaa hh:mm</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="fato">FATO:</label>
+                        <textarea id="fato" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="causa">CAUSA:</label>
+                        <textarea id="causa" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="acao">AÇÃO:</label>
+                        <textarea id="acao" rows="3"></textarea>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleEscalonamentoInput(tipo) {
+            const checkbox = document.getElementById(`esc_${tipo}`);
+            const input = document.getElementById(`esc_${tipo}_nome`);
+            
+            if (checkbox.checked) {
+                input.classList.remove('hidden');
+            } else {
+                input.classList.add('hidden');
+                input.value = '';
+            }
+        }
+
+        function mostrarCampoScan() {
+            const campoScan = document.getElementById('campoScan');
+            const scanSim = document.getElementById('scan_sim');
+            
+            if (scanSim && scanSim.checked) {
+                campoScan.innerHTML = `
+                    <div class="form-group">
+                        <label for="metragemScan">Metragem do Scan:</label>
+                        <input type="text" id="metragemScan" placeholder="Ex: 1500M">
+                    </div>
+                `;
+                campoScan.classList.remove('hidden');
+            } else {
+                campoScan.classList.add('hidden');
+            }
+        }
+
+        function mostrarCampoEquipe() {
+            const campoEquipe = document.getElementById('campoEquipe');
+            const equipeSim = document.getElementById('equipe_sim');
+            
+            if (equipeSim && equipeSim.checked) {
+                campoEquipe.innerHTML = `
+                    <div class="form-group">
+                        <label for="motivoEquipe">Motivo:</label>
+                        <select id="motivoEquipe">
+                            <option value="">-- Selecione --</option>
+                            <option value="ÁREA DE RISCO">Área de risco</option>
+                            <option value="INDISPONIBILIDADE TÉCNICA">Indisponibilidade técnica</option>
+                            <option value="SEM ACESSO">Sem acesso</option>
+                        </select>
+                    </div>
+                `;
+                campoEquipe.classList.remove('hidden');
+            } else {
+                campoEquipe.classList.add('hidden');
+            }
+        }
+
+        function atualizarCamposStatusManobra() {
+            const tipo = document.getElementById('statusManobra').value;
+            const statusCampos = document.getElementById('statusCamposManobra');
+            statusCampos.innerHTML = '';
+
+            if (tipo === 'inicial') {
+                statusCampos.innerHTML = `
+                    <div class="form-group">
+                        <label>Manobra iniciada?</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="manobra_iniciada_sim" name="manobra_iniciada" value="sim">
+                                <label for="manobra_iniciada_sim">Sim</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="manobra_iniciada_nao" name="manobra_iniciada" value="nao">
+                                <label for="manobra_iniciada_nao">Não</label>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (tipo === 'atualizacao') {
+                statusCampos.innerHTML = `
+                    <div class="form-group">
+                        <label for="validadoManobra">Percentual de Nodes Normalizados (%):</label>
+                        <input type="text" id="validadoManobra">
+                    </div>
+                    <div class="form-group">
+                        <label for="atualizacaoManobra">Atualização:</label>
+                        <textarea id="atualizacaoManobra" rows="3"></textarea>
+                    </div>
+                `;
+            } else if (tipo === 'encerramento') {
+                statusCampos.innerHTML = `
+                    <div class="form-group">
+                        <label for="encerramentoManobra">Data e Hora de Encerramento:</label>
+                        <input type="text" id="encerramentoManobra" placeholder="dd/mm/aaaa hh:mm">
+                        <div class="date-format">Formato obrigatório: dd/mm/aaaa hh:mm</div>
+                        <div class="error-message" id="encerramentoManobra-error">Formato incorreto. Use: dd/mm/aaaa hh:mm</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="fatoManobra">FATO:</label>
+                        <textarea id="fatoManobra" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="causaManobra">CAUSA:</label>
+                        <textarea id="causaManobra" rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="acaoManobra">AÇÃO:</label>
+                        <textarea id="acaoManobra" rows="3"></textarea>
+                    </div>
+                `;
+            }
+        }
+
+        function validarFormatoDataHora(dataHora) {
+            const regex = /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/;
+            return regex.test(dataHora);
+        }
+
+        function mostrarErro(campoId, mostrar) {
+            const erroElement = document.getElementById(`${campoId}-error`);
+            if (erroElement) {
+                erroElement.style.display = mostrar ? 'block' : 'none';
+            }
+        }
+
+        function verificarEscalonamento(topologia, valorImpacto) {
+            const numero = parseInt(valorImpacto);
+            if (isNaN(numero)) return false;
+            
+            if (topologia === 'HFC' && numero >= 10) {
+                alert('ATENÇÃO: Este caso precisa de escalonamento! Impacto HFC ≥ 10');
+                return true;
+            } else if (topologia === 'GPON' && numero >= 300) {
+                alert('ATENÇÃO: Este caso precisa de escalonamento! Impacto GPON ≥ 300');
+                return true;
+            }
+            return false;
+        }
+
+        function gerarMensagem() {
+            const topologia = document.getElementById('topologia').value;
+            if (!topologia) {
+                alert('Por favor, selecione o tipo de topologia');
+                return;
+            }
+
+            const tipoStatus = document.getElementById('status').value;
+            if (!tipoStatus) {
+                alert('Por favor, selecione o tipo de status');
+                return;
+            }
+
+            const tipoImpactoElement = document.querySelector('input[name="tipoImpacto"]:checked');
+            if (!tipoImpactoElement) {
+                alert('Por favor, selecione se o incidente tem impacto ou não');
+                return;
+            }
+
+            const impactoValor = document.getElementById('impacto').value;
+            verificarEscalonamento(topologia, impactoValor);
+
+            const camposDataHora = ['abertura', 'previsao', 'acionamento'];
+            if (tipoStatus === 'encerramento') {
+                camposDataHora.push('encerramento');
             }
             
-            await this.salvarTodosIncidentes(todosIncidentes);
-            return true;
-        } catch (error) {
-            console.error('Erro JSONBin:', error);
-            this.salvarLocalmente(incidenteId, tipo, dados);
-            throw error;
-        }
-    }
-
-    async carregarIncidente(incidenteId) {
-        try {
-            const todosIncidentes = await this.buscarTodosIncidentes();
-            const incidente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
-            if (!incidente) throw new Error('Incidente não encontrado');
-            return incidente;
-        } catch (error) {
-            console.error('Erro JSONBin:', error);
-            return this.carregarLocalmente(incidenteId);
-        }
-    }
-
-    async listarIncidentesAtivos() {
-        try {
-            return await this.buscarTodosIncidentes();
-        } catch (error) {
-            console.error('Erro JSONBin:', error);
-            return this.listarLocalmente();
-        }
-    }
-
-    async excluirIncidente(incidenteId) {
-        try {
-            const todosIncidentes = await this.buscarTodosIncidentes();
-            const novosIncidentes = todosIncidentes.filter(inc => inc.incidente_id !== incidenteId);
-            await this.salvarTodosIncidentes(novosIncidentes);
-            return true;
-        } catch (error) {
-            console.error('Erro JSONBin:', error);
-            this.excluirLocalmente(incidenteId);
-            throw error;
-        }
-    }
-
-    async buscarTodosIncidentes() {
-        const response = await fetch(`${this.baseUrl}/${JSONBIN_CONFIG.binId}/latest`, {
-            headers: {
-                'X-Master-Key': JSONBIN_CONFIG.accessKey,
-                'Content-Type': 'application/json'
-            }
-        });
-        if (!response.ok) throw new Error('Erro ao buscar incidentes');
-        const data = await response.json();
-        return data.record.incidentes || [];
-    }
-
-    async salvarTodosIncidentes(incidentes) {
-        const response = await fetch(`${this.baseUrl}/${JSONBIN_CONFIG.binId}`, {
-            method: 'PUT',
-            headers: {
-                'X-Master-Key': JSONBIN_CONFIG.accessKey,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ incidentes: incidentes })
-        });
-        if (!response.ok) throw new Error('Erro ao salvar incidentes');
-        return await response.json();
-    }
-
-    salvarLocalmente(incidenteId, tipo, dados) {
-        const incidentes = JSON.parse(localStorage.getItem('incidentes_locais') || '{}');
-        incidentes[incidenteId] = { tipo, dados, dataCriacao: new Date().toISOString() };
-        localStorage.setItem('incidentes_locais', JSON.stringify(incidentes));
-    }
-
-    carregarLocalmente(incidenteId) {
-        const incidentes = JSON.parse(localStorage.getItem('incidentes_locais') || '{}');
-        if (incidentes[incidenteId]) {
-            return { incidente_id: incidenteId, ...incidentes[incidenteId] };
-        }
-        throw new Error('Incidente não encontrado localmente');
-    }
-
-    listarLocalmente() {
-        const incidentes = JSON.parse(localStorage.getItem('incidentes_locais') || '{}');
-        return Object.keys(incidentes).map(id => ({
-            incidente_id: id,
-            ...incidentes[id]
-        }));
-    }
-
-    excluirLocalmente(incidenteId) {
-        const incidentes = JSON.parse(localStorage.getItem('incidentes_locais') || '{}');
-        delete incidentes[incidenteId];
-        localStorage.setItem('incidentes_locais', JSON.stringify(incidentes));
-    }
-
-    getUsuario() {
-        let usuario = localStorage.getItem('usuario_incidentes');
-        if (!usuario) {
-            usuario = prompt('Digite seu nome para identificar seus incidentes:') || 'Usuário';
-            localStorage.setItem('usuario_incidentes', usuario);
-        }
-        return usuario;
-    }
-}
-
-const jsonBinService = new JSONBinService();
-
-// =============================================
-// VARIÁVEIS GLOBAIS
-// =============================================
-let incidentesAtivos = {};
-let incidenteAtual = null;
-
-// =============================================
-// FUNÇÕES PRINCIPAIS MODIFICADAS
-// =============================================
-
-async function salvarIncidente() {
-    const tipoMensagem = document.getElementById('tipoMensagem').value;
-    if (!tipoMensagem) {
-        alert('Por favor, selecione um tipo de mensagem primeiro');
-        return;
-    }
-
-    let incidenteId = document.getElementById('incidenteId').value.trim();
-    if (!incidenteId) {
-        incidenteId = prompt('Insira o número do incidente:');
-        if (!incidenteId) return;
-        document.getElementById('incidenteId').value = incidenteId;
-    }
-
-    const dados = coletarDadosFormulario(tipoMensagem);
-    if (!dados) return;
-
-    try {
-        await jsonBinService.salvarIncidente(incidenteId, tipoMensagem, dados);
-        incidenteAtual = incidenteId;
-        await atualizarListaIncidentes();
-        alert('✅ Incidente salvo e COMPARTILHADO com todos os usuários!');
-    } catch (error) {
-        alert('⚠️ Incidente salvo localmente (sem compartilhamento)');
-    }
-}
-
-async function carregarIncidente() {
-    const incidenteId = document.getElementById('incidenteId').value.trim();
-    if (!incidenteId) {
-        alert('Insira o número do incidente!');
-        return;
-    }
-    await carregarIncidentePorId(incidenteId);
-}
-
-async function carregarIncidentePorId(incidenteId) {
-    try {
-        const incidente = await jsonBinService.carregarIncidente(incidenteId);
-        document.getElementById('incidenteId').value = incidente.incidente_id;
-        document.getElementById('tipoMensagem').value = incidente.tipo;
-        mostrarFormulario();
-
-        if (incidente.tipo === 'rompimento') {
-            document.getElementById('topologia').value = incidente.dados.topologia || '';
-            document.getElementById('incidente').value = incidente.dados.incidente || '';
-            document.getElementById('cidade').value = incidente.dados.cidade || '';
-            document.getElementById('distrito').value = incidente.dados.distrito || '';
-            document.getElementById('impacto').value = incidente.dados.impacto || '';
-            document.getElementById('base').value = incidente.dados.base || '';
-            document.getElementById('rec').value = incidente.dados.rec || '';
-            document.getElementById('ral').value = incidente.dados.ral || '';
-            document.getElementById('abertura').value = incidente.dados.abertura || '';
-            document.getElementById('previsao').value = incidente.dados.previsao || '';
-            document.getElementById('acionamento').value = incidente.dados.acionamento || '';
-        } else if (incidente.tipo === 'manobra') {
-            document.getElementById('topologiaManobra').value = incidente.dados.topologiaManobra || '';
-            document.getElementById('ticketManobra').value = incidente.dados.ticketManobra || '';
-            document.getElementById('incidenteManobra').value = incidente.dados.incidenteManobra || '';
-            document.getElementById('cidadeManobra').value = incidente.dados.cidadeManobra || '';
-            document.getElementById('distritoManobra').value = incidente.dados.distritoManobra || '';
-            document.getElementById('impactoManobra').value = incidente.dados.impactoManobra || '';
-            document.getElementById('baseManobra').value = incidente.dados.baseManobra || '';
-            document.getElementById('responsavelManobra').value = incidente.dados.responsavelManobra || '';
-            document.getElementById('executorManobra').value = incidente.dados.executorManobra || '';
-            document.getElementById('enderecoManobra').value = incidente.dados.enderecoManobra || '';
-            document.getElementById('propostoManobra').value = incidente.dados.propostoManobra || '';
-        }
-
-        incidenteAtual = incidente.incidente_id;
-        await atualizarListaIncidentes();
-        alert('✅ Incidente carregado do servidor compartilhado!');
-    } catch (error) {
-        alert('❌ Erro ao carregar incidente: ' + error.message);
-    }
-}
-
-async function atualizarListaIncidentes() {
-    const incidentList = document.getElementById('incidentList');
-    incidentList.innerHTML = '<div class="no-incidents">Carregando incidentes...</div>';
-
-    try {
-        const incidentesRemotos = await jsonBinService.listarIncidentesAtivos();
-        
-        if (incidentesRemotos.length === 0) {
-            incidentList.innerHTML = '<div class="no-incidents">Nenhum incidente ativo</div>';
-            return;
-        }
-
-        incidentList.innerHTML = '';
-        incidentesRemotos.forEach(incidente => {
-            const item = document.createElement('div');
-            item.className = `incident-item ${incidenteAtual === incidente.incidente_id ? 'active' : ''}`;
-            item.innerHTML = `
-                <div>
-                    <div class="incident-id">${incidente.incidente_id} 
-                        <small style="color: #666;">(por ${incidente.criado_por})</small>
-                    </div>
-                    <div class="incident-info">${incidente.tipo} - ${incidente.dados.incidente || incidente.dados.incidenteManobra || 'Sem nome'}</div>
-                    <div class="incident-info" style="font-size: 11px;">
-                        Atualizado: ${new Date(incidente.data_atualizacao || incidente.dataCriacao).toLocaleString()}
-                    </div>
-                </div>
-                <button class="delete-incident" onclick="excluirIncidente('${incidente.incidente_id}')">
-                    <i class="fas fa-trash"></i>
-                </button>
-            `;
-            item.addEventListener('click', (e) => {
-                if (!e.target.closest('.delete-incident')) {
-                    carregarIncidentePorId(incidente.incidente_id);
+            let dadosValidos = true;
+            camposDataHora.forEach(campo => {
+                const valor = document.getElementById(campo)?.value;
+                if (valor && !validarFormatoDataHora(valor)) {
+                    mostrarErro(campo, true);
+                    dadosValidos = false;
+                } else {
+                    mostrarErro(campo, false);
                 }
             });
-            incidentList.appendChild(item);
-        });
-    } catch (error) {
-        incidentList.innerHTML = '<div class="no-incidents">Erro ao carregar incidentes</div>';
-    }
-}
-
-async function excluirIncidente(incidenteId) {
-    if (confirm('Tem certeza que deseja excluir o incidente ' + incidenteId + '?')) {
-        try {
-            await jsonBinService.excluirIncidente(incidenteId);
-            if (incidenteAtual === incidenteId) {
-                incidenteAtual = null;
-                document.getElementById('incidenteId').value = '';
-                limparFormularios();
+            
+            if (!dadosValidos) {
+                alert('Por favor, corrija os campos de data/hora no formato dd/mm/aaaa hh:mm');
+                return;
             }
-            await atualizarListaIncidentes();
-            alert('✅ Incidente excluído com sucesso!');
-        } catch (error) {
-            alert('⚠️ Incidente excluído apenas localmente');
+
+            const get = id => document.getElementById(id)?.value.toUpperCase() || '';
+            const tipoImpactoTexto = tipoImpactoElement.value === 'com' ? 'COM IMPACTO' : 'SEM IMPACTO';
+
+            let msg = `## COP REDE INFORMA: INCIDENTE ${tipoImpactoTexto}
+## ROMPIMENTO DE FIBRA RESIDENCIAL\n`;
+            msg += `## TOPOLOGIA: ${get('topologia')}\n`;
+            msg += `## INCIDENTE: ${get('incidente')}\n`;
+            msg += `## CIDADE/CLUSTER: ${get('cidade')}\n`;
+            msg += `## ÁREA/DISTRITO: ${get('distrito')}\n`;
+            msg += `## IMPACTO: ${get('impacto')}\n`;
+            msg += `## BASE AFETADA: ${get('base')}\n`;
+
+            const recValue = parseInt(get('rec'));
+            const ralValue = parseInt(get('ral'));
+            if (!isNaN(recValue) && recValue >= 1) {
+                msg += `## REC: ${recValue}\n`;
+            }
+            if (!isNaN(ralValue) && ralValue >= 1) {
+                msg += `## RAL: ${ralValue}\n`;
+            }
+
+            msg += `## DATA E HORA DE ABERTURA: ${get('abertura')}\n`;
+            msg += `## PREVISÃO DO OUTAGE: ${get('previsao')}\n`;
+            msg += `## DATA E HORA DE ACIONAMENTO: ${get('acionamento') || 'AGUARDANDO DISPONIBILIDADE TÉCNICA'}\n`;
+            msg += `## TIPO DE STATUS: ${document.getElementById('status').options[document.getElementById('status').selectedIndex].text.toUpperCase()}\n`;
+            
+            if (tipoStatus === 'inicial') {
+                const acionado = document.querySelector('input[name="acionado"]:checked');
+                const scan = document.querySelector('input[name="scan"]:checked');
+                const equipe = document.querySelector('input[name="equipe"]:checked');
+                
+                let statusInfo = [];
+                
+                if (acionado && acionado.value === 'sim') {
+                    statusInfo.push('EQUIPE FO ACIONADA');
+                }
+                
+                const escalonamentos = [];
+                if (document.getElementById('esc_ponto_focal')?.checked) {
+                    const nome = get('esc_ponto_focal_nome');
+                    escalonamentos.push(nome ? `PONTO FOCAL ${nome}` : 'PONTO FOCAL');
+                }
+                if (document.getElementById('esc_supervisor')?.checked) {
+                    const nome = get('esc_supervisor_nome');
+                    escalonamentos.push(nome ? `SUPERVISOR ${nome}` : 'SUPERVISOR');
+                }
+                if (document.getElementById('esc_coordenador')?.checked) {
+                    const nome = get('esc_coordenador_nome');
+                    escalonamentos.push(nome ? `COORDENADOR ${nome}` : 'COORDENADOR');
+                }
+                if (document.getElementById('esc_gerente')?.checked) {
+                    const nome = get('esc_gerente_nome');
+                    escalonamentos.push(nome ? `GERENTE ${nome}` : 'GERENTE');
+                }
+                
+                if (escalonamentos.length > 0) {
+                    statusInfo.push(`ESCALONADO: ${escalonamentos.join(', ')}`);
+                }
+                
+                if (scan && scan.value === 'sim') {
+                    const metragem = get('metragemScan');
+                    statusInfo.push(`EFETUADO SCAN: ${metragem}`);
+                }
+                
+                if (equipe && equipe.value === 'sim') {
+                    const motivo = document.getElementById('motivoEquipe')?.value || '';
+                    statusInfo.push(`INCIDENTE AOS CUIDADOS DA EQUIPE DA MANHÃ. MOTIVO: ${motivo}`);
+                }
+                
+                if (statusInfo.length > 0) {
+                    msg += statusInfo.join('. ') + '.\n';
+                }
+            } else if (tipoStatus === 'atualizacao') {
+                const percorrendo = document.querySelector('input[name="percorrendo"]:checked');
+                const avaliando = document.querySelector('input[name="avaliando"]:checked');
+                const endereco = get('enderecoDano');
+                const causa = get('causaDano');
+                const cabos = get('cabosAfetados');
+                const percentual = get('validado');
+                
+                let statusInfo = [];
+                
+                if (endereco && causa && cabos) {
+                    statusInfo.push(`LOCALIZADO DANO EM ${endereco}, OCASIONADO POR ${causa}, AFETANDO CABOS DE ${cabos}`);
+                }
+                
+                if (percorrendo && percorrendo.value === 'sim') {
+                    statusInfo.push('EQUIPE SEGUE PERCORRENDO ROTA');
+                }
+                
+                if (avaliando && avaliando.value === 'sim') {
+                    statusInfo.push('EQUIPE SEGUE AVALIANDO INFRAESTRUTURA NO LOCAL');
+                }
+                
+                if (percentual && parseInt(percentual) > 0) {
+                    statusInfo.push(`PERCENTUAL DE NODES NORMALIZADOS: ${percentual}%`);
+                }
+                
+                if (statusInfo.length > 0) {
+                    msg += statusInfo.join('. ') + '.\n';
+                }
+            } else if (tipoStatus === 'encerramento') {
+                msg += `## DATA E HORA DE ENCERRAMENTO: ${get('encerramento')}\n`;
+                msg += `FATO: ${get('fato')}. CAUSA: ${get('causa')}. AÇÃO: ${get('acao')}.\n`;
+                msg += `\n✅ SITUAÇÃO NORMALIZADA - SERVIÇO CONCLUÍDO COM SUCESSO`;
+            }
+            
+            document.getElementById('output').textContent = msg;
+            document.getElementById('outputContainer').classList.remove('hidden');
         }
-    }
-}
 
-// =============================================
-// SUAS FUNÇÕES ORIGINAIS (mantenha estas)
-// =============================================
+        function gerarMensagemManobra() {
+            const topologiaManobra = document.getElementById('topologiaManobra').value;
+            if (!topologiaManobra) {
+                alert('Por favor, selecione o tipo de topologia');
+                return;
+            }
 
-function coletarDadosFormulario(tipo) {
-    if (tipo === 'rompimento') {
-        return {
-            topologia: document.getElementById('topologia').value,
-            incidente: document.getElementById('incidente').value,
-            cidade: document.getElementById('cidade').value,
-            distrito: document.getElementById('distrito').value,
-            impacto: document.getElementById('impacto').value,
-            base: document.getElementById('base').value,
-            rec: document.getElementById('rec').value,
-            ral: document.getElementById('ral').value,
-            abertura: document.getElementById('abertura').value,
-            previsao: document.getElementById('previsao').value,
-            acionamento: document.getElementById('acionamento').value
-        };
-    } else if (tipo === 'manobra') {
-        return {
-            topologiaManobra: document.getElementById('topologiaManobra').value,
-            ticketManobra: document.getElementById('ticketManobra').value,
-            incidenteManobra: document.getElementById('incidenteManobra').value,
-            cidadeManobra: document.getElementById('cidadeManobra').value,
-            distritoManobra: document.getElementById('distritoManobra').value,
-            impactoManobra: document.getElementById('impactoManobra').value,
-            baseManobra: document.getElementById('baseManobra').value,
-            responsavelManobra: document.getElementById('responsavelManobra').value,
-            executorManobra: document.getElementById('executorManobra').value,
-            enderecoManobra: document.getElementById('enderecoManobra').value,
-            propostoManobra: document.getElementById('propostoManobra').value
-        };
-    }
-    return null;
-}
+            const tipoStatus = document.getElementById('statusManobra').value;
+            if (!tipoStatus) {
+                alert('Por favor, selecione o tipo de status');
+                return;
+            }
 
-function validarCampoNumerico(input) {
-    input.value = input.value.replace(/[^0-9]/g, '');
-}
+            const tipoImpactoElement = document.querySelector('input[name="tipoImpactoManobra"]:checked');
+            if (!tipoImpactoElement) {
+                alert('Por favor, selecione se o incidente tem impacto ou não');
+                return;
+            }
 
-function mostrarFormulario() {
-    const tipo = document.getElementById('tipoMensagem').value;
-    document.getElementById('formRompimento').classList.add('hidden');
-    document.getElementById('formManobra').classList.add('hidden');
-    document.getElementById('outputContainer').classList.add('hidden');
-    
-    if (tipo === 'rompimento') {
-        document.getElementById('formRompimento').classList.remove('hidden');
-    } else if (tipo === 'manobra') {
-        document.getElementById('formManobra').classList.remove('hidden');
-    }
-}
-
-function limparFormularios() {
-    document.getElementById('topologia').value = '';
-    document.getElementById('incidente').value = '';
-    document.getElementById('cidade').value = '';
-    document.getElementById('distrito').value = '';
-    document.getElementById('impacto').value = '';
-    document.getElementById('base').value = '';
-    document.getElementById('rec').value = '';
-    document.getElementById('ral').value = '';
-    document.getElementById('abertura').value = '';
-    document.getElementById('previsao').value = '';
-    document.getElementById('acionamento').value = '';
-    document.getElementById('status').value = '';
-    document.getElementById('statusCampos').innerHTML = '';
-
-    document.getElementById('topologiaManobra').value = '';
-    document.getElementById('ticketManobra').value = '';
-    document.getElementById('incidenteManobra').value = '';
-    document.getElementById('cidadeManobra').value = '';
-    document.getElementById('distritoManobra').value = '';
-    document.getElementById('impactoManobra').value = '';
-    document.getElementById('baseManobra').value = '';
-    document.getElementById('responsavelManobra').value = '';
-    document.getElementById('executorManobra').value = '';
-    document.getElementById('enderecoManobra').value = '';
-    document.getElementById('propostoManobra').value = '';
-    document.getElementById('statusManobra').value = '';
-    document.getElementById('statusCamposManobra').innerHTML = '';
-}
-
-// =============================================
-// INICIALIZAÇÃO
-// =============================================
-document.addEventListener('DOMContentLoaded', function() {
-    atualizarListaIncidentes();
-    
-    const inputs = document.querySelectorAll('input, textarea');
-    inputs.forEach(input => {
-        if (input.type !== 'radio' && input.type !== 'checkbox') {
-            input.addEventListener('input', function() {
-                this.value = this.value.toUpperCase();
-                this.value = this.value.replace(/\.{2,}/g, '.');
+            const camposDataHora = [];
+            if (tipoStatus === 'encerramento') {
+                camposDataHora.push('encerramentoManobra');
+            }
+            
+            let dadosValidos = true;
+            camposDataHora.forEach(campo => {
+                const valor = document.getElementById(campo)?.value;
+                if (valor && !validarFormatoDataHora(valor)) {
+                    mostrarErro(campo, true);
+                    dadosValidos = false;
+                } else {
+                    mostrarErro(campo, false);
+                }
             });
-        }
-    });
-});
+            
+            if (!dadosValidos) {
+                alert('Por favor, corrija os campos de data/hora no formato dd/mm/aaaa hh:mm');
+                return;
+            }
 
-// ADICIONE AQUI SUAS OUTRAS FUNÇÕES ORIGINAIS:
-// atualizarCamposStatus, gerarMensagem, gerarMensagemManobra, etc.
-// (todas as funções que não substituímos acima)
-</script>
+            const get = id => document.getElementById(id)?.value.toUpperCase() || '';
+            const tipoImpactoTexto = tipoImpactoElement.value === 'com' ? 'COM IMPACTO' : 'SEM IMPACTO';
+
+            let msg = `## COP REDE INFORMA: INCIDENTE ${tipoImpactoTexto}
+## MANOBRA DE FIBRA RESIDENCIAL\n`;
+            msg += `## TOPOLOGIA: ${get('topologiaManobra')}\n`;
+            msg += `## TICKET DA MANOBRA: ${get('ticketManobra')}\n`;
+            msg += `## INCIDENTE: ${get('incidenteManobra')}\n`;
+            msg += `## CIDADE/CLUSTER: ${get('cidadeManobra')}\n`;
+            msg += `## ÁREA/DISTRITO: ${get('distritoManobra')}\n`;
+            msg += `## IMPACTO: ${get('impactoManobra')}\n`;
+            msg += `## BASE AFETADA: ${get('baseManobra')}\n`;
+            msg += `## RESPONSÁVEL: ${get('responsavelManobra')}\n`;
+            msg += `## EXECUTOR: ${get('executorManobra')}\n`;
+            msg += `## ENDEREÇO: ${get('enderecoManobra')}\n`;
+            msg += `## PROPOSTO: ${get('propostoManobra')}\n`;
+            msg += `## TIPO DE STATUS: ${document.getElementById('statusManobra').options[document.getElementById('statusManobra').selectedIndex].text.toUpperCase()}\n`;
+            
+            if (tipoStatus === 'inicial') {
+                const manobraIniciada = document.querySelector('input[name="manobra_iniciada"]:checked');
+                
+                if (manobraIniciada && manobraIniciada.value === 'sim') {
+                    msg += `MANOBRA INICIADA.\n`;
+                }
+            } else if (tipoStatus === 'atualizacao') {
+                const percentual = get('validadoManobra');
+                const atualizacao = get('atualizacaoManobra');
+                
+                if (percentual && parseInt(percentual) > 0) {
+                    msg += `PERCENTUAL DE NODES NORMALIZADOS: ${percentual}%\n`;
+                }
+                
+                if (atualizacao) {
+                    msg += `${atualizacao}\n`;
+                }
+            } else if (tipoStatus === 'encerramento') {
+                msg += `## DATA E HORA DE ENCERRAMENTO: ${get('encerramentoManobra')}\n`;
+                msg += `FATO: ${get('fatoManobra')}\n`;
+                msg += `CAUSA: ${get('causaManobra')}\n`;
+                msg += `AÇÃO: ${get('acaoManobra')}\n`;
+                msg += `\n✅ SITUAÇÃO NORMALIZADA - SERVIÇO CONCLUÍDO COM SUCESSO`;
+            }
+            
+            document.getElementById('output').textContent = msg;
+            document.getElementById('outputContainer').classList.remove('hidden');
+        }
+
+        function copiarMensagem() {
+            const output = document.getElementById('output');
+            const textarea = document.createElement('textarea');
+            textarea.value = output.textContent;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            
+            const btn = document.querySelector('.btn-copy');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        function limparMensagem() {
+            document.getElementById('output').textContent = '';
+            document.getElementById('outputContainer').classList.add('hidden');
+        }
+
+        // =============================================
+        // INICIALIZAÇÃO
+        // =============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            atualizarListaIncidentes();
+            
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                if (input.type !== 'radio' && input.type !== 'checkbox') {
+                    input.addEventListener('input', function() {
+                        this.value = this.value.toUpperCase();
+                        this.value = this.value.replace(/\.{2,}/g, '.');
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
