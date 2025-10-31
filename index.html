@@ -637,12 +637,13 @@
         </footer>
     </div>
 
+<script>
 // =============================================
 // CONFIGURAÇÃO DO JSONBIN.IO - EDITAR AQUI!
 // =============================================
 const JSONBIN_CONFIG = {
-    binId: 690480d2ae596e708f39dcad
-    accessKey: $2a$10$iCHPT/M2gqtqeGsBZ/AdCeE.Y/yihLCb5IKZbACZrafL8/.fIuRAW
+    binId: '690480d2ae596e708f39dcad',
+    accessKey: '$2a$10$iCHPT/M2gqtqeGsBZ/AdCeE.Y/yihLCb5IKZbACZrafL8/.fIuRAW'
 };
 
 // =============================================
@@ -790,7 +791,6 @@ let incidenteAtual = null;
 // FUNÇÕES PRINCIPAIS MODIFICADAS
 // =============================================
 
-// NOVA função salvarIncidente
 async function salvarIncidente() {
     const tipoMensagem = document.getElementById('tipoMensagem').value;
     if (!tipoMensagem) {
@@ -812,13 +812,12 @@ async function salvarIncidente() {
         await jsonBinService.salvarIncidente(incidenteId, tipoMensagem, dados);
         incidenteAtual = incidenteId;
         await atualizarListaIncidentes();
-        alert(`✅ Incidente ${incidenteId} salvo e COMPARTILHADO com todos os usuários!`);
+        alert('✅ Incidente salvo e COMPARTILHADO com todos os usuários!');
     } catch (error) {
         alert('⚠️ Incidente salvo localmente (sem compartilhamento)');
     }
 }
 
-// NOVA função carregarIncidente
 async function carregarIncidente() {
     const incidenteId = document.getElementById('incidenteId').value.trim();
     if (!incidenteId) {
@@ -863,13 +862,12 @@ async function carregarIncidentePorId(incidenteId) {
 
         incidenteAtual = incidente.incidente_id;
         await atualizarListaIncidentes();
-        alert(`✅ Incidente ${incidenteId} carregado do servidor compartilhado!`);
+        alert('✅ Incidente carregado do servidor compartilhado!');
     } catch (error) {
         alert('❌ Erro ao carregar incidente: ' + error.message);
     }
 }
 
-// NOVA função atualizarListaIncidentes
 async function atualizarListaIncidentes() {
     const incidentList = document.getElementById('incidentList');
     incidentList.innerHTML = '<div class="no-incidents">Carregando incidentes...</div>';
@@ -912,9 +910,8 @@ async function atualizarListaIncidentes() {
     }
 }
 
-// NOVA função excluirIncidente
 async function excluirIncidente(incidenteId) {
-    if (confirm(`Tem certeza que deseja excluir o incidente ${incidenteId}?`)) {
+    if (confirm('Tem certeza que deseja excluir o incidente ' + incidenteId + '?')) {
         try {
             await jsonBinService.excluirIncidente(incidenteId);
             if (incidenteAtual === incidenteId) {
@@ -923,7 +920,7 @@ async function excluirIncidente(incidenteId) {
                 limparFormularios();
             }
             await atualizarListaIncidentes();
-            alert(`✅ Incidente ${incidenteId} excluído com sucesso!`);
+            alert('✅ Incidente excluído com sucesso!');
         } catch (error) {
             alert('⚠️ Incidente excluído apenas localmente');
         }
@@ -985,30 +982,33 @@ function mostrarFormulario() {
 }
 
 function limparFormularios() {
-    // Seu código original de limpar formulários
     document.getElementById('topologia').value = '';
     document.getElementById('incidente').value = '';
-    // ... continue com todos os campos
-}
+    document.getElementById('cidade').value = '';
+    document.getElementById('distrito').value = '';
+    document.getElementById('impacto').value = '';
+    document.getElementById('base').value = '';
+    document.getElementById('rec').value = '';
+    document.getElementById('ral').value = '';
+    document.getElementById('abertura').value = '';
+    document.getElementById('previsao').value = '';
+    document.getElementById('acionamento').value = '';
+    document.getElementById('status').value = '';
+    document.getElementById('statusCampos').innerHTML = '';
 
-function atualizarCamposStatus() {
-    // SEU CÓDIGO ORIGINAL AQUI - não mude
-}
-
-function gerarMensagem() {
-    // SEU CÓDIGO ORIGINAL AQUI - não mude
-}
-
-function gerarMensagemManobra() {
-    // SEU CÓDIGO ORIGINAL AQUI - não mude
-}
-
-function copiarMensagem() {
-    // SEU CÓDIGO ORIGINAL AQUI - não mude
-}
-
-function limparMensagem() {
-    // SEU CÓDIGO ORIGINAL AQUI - não mude
+    document.getElementById('topologiaManobra').value = '';
+    document.getElementById('ticketManobra').value = '';
+    document.getElementById('incidenteManobra').value = '';
+    document.getElementById('cidadeManobra').value = '';
+    document.getElementById('distritoManobra').value = '';
+    document.getElementById('impactoManobra').value = '';
+    document.getElementById('baseManobra').value = '';
+    document.getElementById('responsavelManobra').value = '';
+    document.getElementById('executorManobra').value = '';
+    document.getElementById('enderecoManobra').value = '';
+    document.getElementById('propostoManobra').value = '';
+    document.getElementById('statusManobra').value = '';
+    document.getElementById('statusCamposManobra').innerHTML = '';
 }
 
 // =============================================
@@ -1027,5 +1027,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// ADICIONE AQUI SUAS OUTRAS FUNÇÕES ORIGINAIS:
+// atualizarCamposStatus, gerarMensagem, gerarMensagemManobra, etc.
+// (todas as funções que não substituímos acima)
+</script>
 </body>
 </html>
