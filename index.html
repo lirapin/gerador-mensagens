@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -300,10 +299,42 @@
             width: auto;
         }
 
+        .radio-option label {
+            font-weight: normal;
+            margin: 0;
+        }
+
         .conditional-field {
             margin-top: 15px;
             padding-left: 20px;
             border-left: 3px solid #81c784;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .checkbox-option input[type="checkbox"] {
+            width: auto;
+        }
+
+        .checkbox-option label {
+            font-weight: normal;
+            margin: 0;
+        }
+
+        .escalonamento-input {
+            margin-left: 25px;
+            margin-top: 5px;
         }
 
         @media (max-width: 768px) {
@@ -381,6 +412,20 @@
         <div id="formRompimento" class="card hidden">
             <h2><span class="status-indicator status-active"></span> Rompimento de Fibra Residencial</h2>
 
+            <div class="form-group">
+                <label>Tipo de Incidente:</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="impacto_com" name="tipoImpacto" value="com">
+                        <label for="impacto_com">Com Impacto</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="impacto_sem" name="tipoImpacto" value="sem">
+                        <label for="impacto_sem">Sem Impacto</label>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-row">
                 <div class="form-group">
                     <label for="topologia">Topologia:</label>
@@ -418,6 +463,18 @@
                 <div class="form-group">
                     <label for="base">Base Afetada:</label>
                     <input type="text" id="base" oninput="validarCampoNumerico(this)">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="rec">REC:</label>
+                    <input type="text" id="rec" oninput="validarCampoNumerico(this)">
+                </div>
+                
+                <div class="form-group">
+                    <label for="ral">RAL:</label>
+                    <input type="text" id="ral" oninput="validarCampoNumerico(this)">
                 </div>
             </div>
 
@@ -466,6 +523,20 @@
 
         <div id="formManobra" class="card hidden">
             <h2><span class="status-indicator status-active"></span> Manobra de Fibra Residencial</h2>
+
+            <div class="form-group">
+                <label>Tipo de Incidente:</label>
+                <div class="radio-group">
+                    <div class="radio-option">
+                        <input type="radio" id="impacto_com_m" name="tipoImpactoManobra" value="com">
+                        <label for="impacto_com_m">Com Impacto</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="impacto_sem_m" name="tipoImpactoManobra" value="sem">
+                        <label for="impacto_sem_m">Sem Impacto</label>
+                    </div>
+                </div>
+            </div>
 
             <div class="form-group">
                 <label for="topologiaManobra">Topologia:</label>
@@ -575,10 +646,12 @@
             
             const inputs = document.querySelectorAll('input, textarea');
             inputs.forEach(input => {
-                input.addEventListener('input', function() {
-                    this.value = this.value.toUpperCase();
-                    this.value = this.value.replace(/\.{2,}/g, '.');
-                });
+                if (input.type !== 'radio' && input.type !== 'checkbox') {
+                    input.addEventListener('input', function() {
+                        this.value = this.value.toUpperCase();
+                        this.value = this.value.replace(/\.{2,}/g, '.');
+                    });
+                }
             });
         });
 
@@ -653,6 +726,8 @@
                     distrito: document.getElementById('distrito').value,
                     impacto: document.getElementById('impacto').value,
                     base: document.getElementById('base').value,
+                    rec: document.getElementById('rec').value,
+                    ral: document.getElementById('ral').value,
                     abertura: document.getElementById('abertura').value,
                     previsao: document.getElementById('previsao').value,
                     acionamento: document.getElementById('acionamento').value
@@ -666,6 +741,8 @@
                     distritoManobra: document.getElementById('distritoManobra').value,
                     impactoManobra: document.getElementById('impactoManobra').value,
                     baseManobra: document.getElementById('baseManobra').value,
+                    recManobra: document.getElementById('recManobra').value,
+                    ralManobra: document.getElementById('ralManobra').value,
                     responsavelManobra: document.getElementById('responsavelManobra').value,
                     executorManobra: document.getElementById('executorManobra').value,
                     enderecoManobra: document.getElementById('enderecoManobra').value,
@@ -702,6 +779,8 @@
                 document.getElementById('distrito').value = incidente.distrito || '';
                 document.getElementById('impacto').value = incidente.impacto || '';
                 document.getElementById('base').value = incidente.base || '';
+                document.getElementById('rec').value = incidente.rec || '';
+                document.getElementById('ral').value = incidente.ral || '';
                 document.getElementById('abertura').value = incidente.abertura || '';
                 document.getElementById('previsao').value = incidente.previsao || '';
                 document.getElementById('acionamento').value = incidente.acionamento || '';
@@ -713,6 +792,8 @@
                 document.getElementById('distritoManobra').value = incidente.distritoManobra || '';
                 document.getElementById('impactoManobra').value = incidente.impactoManobra || '';
                 document.getElementById('baseManobra').value = incidente.baseManobra || '';
+                document.getElementById('recManobra').value = incidente.recManobra || '';
+                document.getElementById('ralManobra').value = incidente.ralManobra || '';
                 document.getElementById('responsavelManobra').value = incidente.responsavelManobra || '';
                 document.getElementById('executorManobra').value = incidente.executorManobra || '';
                 document.getElementById('enderecoManobra').value = incidente.enderecoManobra || '';
@@ -746,6 +827,8 @@
             document.getElementById('distrito').value = '';
             document.getElementById('impacto').value = '';
             document.getElementById('base').value = '';
+            document.getElementById('rec').value = '';
+            document.getElementById('ral').value = '';
             document.getElementById('abertura').value = '';
             document.getElementById('previsao').value = '';
             document.getElementById('acionamento').value = '';
@@ -759,6 +842,8 @@
             document.getElementById('distritoManobra').value = '';
             document.getElementById('impactoManobra').value = '';
             document.getElementById('baseManobra').value = '';
+            document.getElementById('recManobra').value = '';
+            document.getElementById('ralManobra').value = '';
             document.getElementById('responsavelManobra').value = '';
             document.getElementById('executorManobra').value = '';
             document.getElementById('enderecoManobra').value = '';
@@ -809,33 +894,47 @@
                         <label>Incidente acionado?</label>
                         <div class="radio-group">
                             <div class="radio-option">
-                                <input type="radio" id="acionado_sim" name="acionado" value="sim" onchange="mostrarCampoAcionado()">
+                                <input type="radio" id="acionado_sim" name="acionado" value="sim">
                                 <label for="acionado_sim">Sim</label>
                             </div>
                             <div class="radio-option">
-                                <input type="radio" id="acionado_nao" name="acionado" value="nao" onchange="mostrarCampoAcionado()">
+                                <input type="radio" id="acionado_nao" name="acionado" value="nao">
                                 <label for="acionado_nao">Não</label>
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label>Foi escalonado?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" id="escalonado_sim" name="escalonado" value="sim" onchange="mostrarCampoEscalonado()">
-                                <label for="escalonado_sim">Sim</label>
+                        <label>Escalonamento?</label>
+                        <div class="checkbox-group">
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="esc_ponto_focal" onchange="toggleEscalonamentoInput('ponto_focal')">
+                                <label for="esc_ponto_focal">Ponto Focal</label>
                             </div>
-                            <div class="radio-option">
-                                <input type="radio" id="escalonado_nao" name="escalonado" value="nao" onchange="mostrarCampoEscalonado()">
-                                <label for="escalonado_nao">Não</label>
+                            <input type="text" id="esc_ponto_focal_nome" class="escalonamento-input hidden" placeholder="Nome do Ponto Focal">
+                            
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="esc_supervisor" onchange="toggleEscalonamentoInput('supervisor')">
+                                <label for="esc_supervisor">Supervisor</label>
                             </div>
+                            <input type="text" id="esc_supervisor_nome" class="escalonamento-input hidden" placeholder="Nome do Supervisor">
+                            
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="esc_coordenador" onchange="toggleEscalonamentoInput('coordenador')">
+                                <label for="esc_coordenador">Coordenador</label>
+                            </div>
+                            <input type="text" id="esc_coordenador_nome" class="escalonamento-input hidden" placeholder="Nome do Coordenador">
+                            
+                            <div class="checkbox-option">
+                                <input type="checkbox" id="esc_gerente" onchange="toggleEscalonamentoInput('gerente')">
+                                <label for="esc_gerente">Gerente</label>
+                            </div>
+                            <input type="text" id="esc_gerente_nome" class="escalonamento-input hidden" placeholder="Nome do Gerente">
                         </div>
-                        <div id="campoEscalonado" class="conditional-field hidden"></div>
                     </div>
 
                     <div class="form-group">
-                        <label>Houve scan?</label>
+                        <label>Scan realizado?</label>
                         <div class="radio-group">
                             <div class="radio-option">
                                 <input type="radio" id="scan_sim" name="scan" value="sim" onchange="mostrarCampoScan()">
@@ -850,7 +949,7 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Incidente ficará aos cuidados da equipe da manhã?</label>
+                        <label>Incidente ficará com equipe da manhã?</label>
                         <div class="radio-group">
                             <div class="radio-option">
                                 <input type="radio" id="equipe_sim" name="equipe" value="sim" onchange="mostrarCampoEquipe()">
@@ -875,20 +974,11 @@
                         <input type="text" id="causaDano">
                     </div>
                     <div class="form-group">
-                        <label>A equipe ainda está avaliando infra?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" id="avaliando_sim" name="avaliando" value="sim">
-                                <label for="avaliando_sim">Sim</label>
-                            </div>
-                            <div class="radio-option">
-                                <input type="radio" id="avaliando_nao" name="avaliando" value="nao">
-                                <label for="avaliando_nao">Não</label>
-                            </div>
-                        </div>
+                        <label for="cabosAfetados">Cabos Afetados:</label>
+                        <input type="text" id="cabosAfetados">
                     </div>
                     <div class="form-group">
-                        <label>A equipe ainda está percorrendo rota?</label>
+                        <label>Equipe percorrendo rota?</label>
                         <div class="radio-group">
                             <div class="radio-option">
                                 <input type="radio" id="percorrendo_sim" name="percorrendo" value="sim">
@@ -897,6 +987,19 @@
                             <div class="radio-option">
                                 <input type="radio" id="percorrendo_nao" name="percorrendo" value="nao">
                                 <label for="percorrendo_nao">Não</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Equipe avaliando infra?</label>
+                        <div class="radio-group">
+                            <div class="radio-option">
+                                <input type="radio" id="avaliando_sim" name="avaliando" value="sim">
+                                <label for="avaliando_sim">Sim</label>
+                            </div>
+                            <div class="radio-option">
+                                <input type="radio" id="avaliando_nao" name="avaliando" value="nao">
+                                <label for="avaliando_nao">Não</label>
                             </div>
                         </div>
                     </div>
@@ -915,53 +1018,29 @@
                     </div>
                     <div class="form-group">
                         <label for="fato">FATO:</label>
-                        <textarea id="fato" rows="2" placeholder="Ex: Sem sinal"></textarea>
+                        <textarea id="fato" rows="2"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="causa">CAUSA:</label>
-                        <textarea id="causa" rows="2" placeholder="Ex: Vandalismo, rompimento, etc."></textarea>
+                        <textarea id="causa" rows="2"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="acao">AÇÃO:</label>
-                        <textarea id="acao" rows="3" placeholder="Ex: Localizado dano na Rua Siracusa, 201, ocasionado por vandalismo. Inserida caixa RTO e refeitas 30 fusões."></textarea>
+                        <textarea id="acao" rows="3"></textarea>
                     </div>
                 `;
             }
         }
 
-        function mostrarCampoAcionado() {
-            // Nenhuma ação adicional necessária
-        }
-
-        function mostrarCampoEscalonado() {
-            const campoEscalonado = document.getElementById('campoEscalonado');
-            const escalonadoSim = document.getElementById('escalonado_sim');
+        function toggleEscalonamentoInput(tipo) {
+            const checkbox = document.getElementById(`esc_${tipo}`);
+            const input = document.getElementById(`esc_${tipo}_nome`);
             
-            if (escalonadoSim && escalonadoSim.checked) {
-                campoEscalonado.innerHTML = `
-                    <div class="form-group">
-                        <label for="escalonadoPara">Escalonado para:</label>
-                        <input type="text" id="escalonadoPara" placeholder="Nome da equipe/pessoa">
-                    </div>
-                `;
-                campoEscalonado.classList.remove('hidden');
+            if (checkbox.checked) {
+                input.classList.remove('hidden');
             } else {
-                const escalonadoNao = document.getElementById('escalonado_nao');
-                if (escalonadoNao && escalonadoNao.checked) {
-                    campoEscalonado.innerHTML = `
-                        <div class="form-group">
-                            <label for="motivoNaoEscalonado">Motivo:</label>
-                            <select id="motivoNaoEscalonado">
-                                <option value="">-- Selecione --</option>
-                                <option value="FORA DO HORÁRIO">Fora do horário</option>
-                                <option value="LIGAÇÃO SEM SUCESSO">Ligação sem sucesso</option>
-                            </select>
-                        </div>
-                    `;
-                    campoEscalonado.classList.remove('hidden');
-                } else {
-                    campoEscalonado.classList.add('hidden');
-                }
+                input.classList.add('hidden');
+                input.value = '';
             }
         }
 
@@ -973,7 +1052,7 @@
                 campoScan.innerHTML = `
                     <div class="form-group">
                         <label for="metragemScan">Metragem do Scan:</label>
-                        <input type="text" id="metragemScan" placeholder="Ex: 1500m">
+                        <input type="text" id="metragemScan" placeholder="Ex: 1500M">
                     </div>
                 `;
                 campoScan.classList.remove('hidden');
@@ -1012,103 +1091,28 @@
             if (tipo === 'inicial') {
                 statusCampos.innerHTML = `
                     <div class="form-group">
-                        <label>Incidente acionado?</label>
+                        <label>Manobra iniciada?</label>
                         <div class="radio-group">
                             <div class="radio-option">
-                                <input type="radio" id="acionado_sim_m" name="acionado_m" value="sim">
-                                <label for="acionado_sim_m">Sim</label>
+                                <input type="radio" id="manobra_iniciada_sim" name="manobra_iniciada" value="sim">
+                                <label for="manobra_iniciada_sim">Sim</label>
                             </div>
                             <div class="radio-option">
-                                <input type="radio" id="acionado_nao_m" name="acionado_m" value="nao">
-                                <label for="acionado_nao_m">Não</label>
+                                <input type="radio" id="manobra_iniciada_nao" name="manobra_iniciada" value="nao">
+                                <label for="manobra_iniciada_nao">Não</label>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Foi escalonado?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" id="escalonado_sim_m" name="escalonado_m" value="sim" onchange="mostrarCampoEscalonadoManobra()">
-                                <label for="escalonado_sim_m">Sim</label>
-                            </div>
-                            <div class="radio-option">
-                                <input type="radio" id="escalonado_nao_m" name="escalonado_m" value="nao" onchange="mostrarCampoEscalonadoManobra()">
-                                <label for="escalonado_nao_m">Não</label>
-                            </div>
-                        </div>
-                        <div id="campoEscalonadoManobra" class="conditional-field hidden"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Houve scan?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" id="scan_sim_m" name="scan_m" value="sim" onchange="mostrarCampoScanManobra()">
-                                <label for="scan_sim_m">Sim</label>
-                            </div>
-                            <div class="radio-option">
-                                <input type="radio" id="scan_nao_m" name="scan_m" value="nao" onchange="mostrarCampoScanManobra()">
-                                <label for="scan_nao_m">Não</label>
-                            </div>
-                        </div>
-                        <div id="campoScanManobra" class="conditional-field hidden"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Incidente ficará aos cuidados da equipe da manhã?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" id="equipe_sim_m" name="equipe_m" value="sim" onchange="mostrarCampoEquipeManobra()">
-                                <label for="equipe_sim_m">Sim</label>
-                            </div>
-                            <div class="radio-option">
-                                <input type="radio" id="equipe_nao_m" name="equipe_m" value="nao" onchange="mostrarCampoEquipeManobra()">
-                                <label for="equipe_nao_m">Não</label>
-                            </div>
-                        </div>
-                        <div id="campoEquipeManobra" class="conditional-field hidden"></div>
                     </div>
                 `;
             } else if (tipo === 'atualizacao') {
                 statusCampos.innerHTML = `
                     <div class="form-group">
-                        <label for="enderecoDanoManobra">Endereço do Dano:</label>
-                        <input type="text" id="enderecoDanoManobra">
-                    </div>
-                    <div class="form-group">
-                        <label for="causaDanoManobra">Causa do Dano:</label>
-                        <input type="text" id="causaDanoManobra">
-                    </div>
-                    <div class="form-group">
-                        <label>A equipe ainda está avaliando infra?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" id="avaliando_sim_m" name="avaliando_m" value="sim">
-                                <label for="avaliando_sim_m">Sim</label>
-                            </div>
-                            <div class="radio-option">
-                                <input type="radio" id="avaliando_nao_m" name="avaliando_m" value="nao">
-                                <label for="avaliando_nao_m">Não</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>A equipe ainda está percorrendo rota?</label>
-                        <div class="radio-group">
-                            <div class="radio-option">
-                                <input type="radio" id="percorrendo_sim_m" name="percorrendo_m" value="sim">
-                                <label for="percorrendo_sim_m">Sim</label>
-                            </div>
-                            <div class="radio-option">
-                                <input type="radio" id="percorrendo_nao_m" name="percorrendo_m" value="nao">
-                                <label for="percorrendo_nao_m">Não</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
                         <label for="validadoManobra">Percentual de Nodes Normalizados (%):</label>
                         <input type="text" id="validadoManobra">
+                    </div>
+                    <div class="form-group">
+                        <label for="atualizacaoManobra">Atualização:</label>
+                        <textarea id="atualizacaoManobra" rows="3"></textarea>
                     </div>
                 `;
             } else if (tipo === 'encerramento') {
@@ -1121,49 +1125,29 @@
                     </div>
                     <div class="form-group">
                         <label for="fatoManobra">FATO:</label>
-                        <textarea id="fatoManobra" rows="2" placeholder="Ex: Sem sinal"></textarea>
+                        <textarea id="fatoManobra" rows="2"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="causaManobra">CAUSA:</label>
-                        <textarea id="causaManobra" rows="2" placeholder="Ex: Vandalismo, rompimento, etc."></textarea>
+                        <textarea id="causaManobra" rows="2"></textarea>
                     </div>
                     <div class="form-group">
                         <label for="acaoManobra">AÇÃO:</label>
-                        <textarea id="acaoManobra" rows="3" placeholder="Ex: Localizado dano na Rua Siracusa, 201, ocasionado por vandalismo. Inserida caixa RTO e refeitas 30 fusões."></textarea>
+                        <textarea id="acaoManobra" rows="3"></textarea>
                     </div>
                 `;
             }
         }
 
-        function mostrarCampoEscalonadoManobra() {
-            const campoEscalonado = document.getElementById('campoEscalonadoManobra');
-            const escalonadoSim = document.getElementById('escalonado_sim_m');
+        function toggleEscalonamentoInputManobra(tipo) {
+            const checkbox = document.getElementById(`esc_${tipo}_m`);
+            const input = document.getElementById(`esc_${tipo}_nome_m`);
             
-            if (escalonadoSim && escalonadoSim.checked) {
-                campoEscalonado.innerHTML = `
-                    <div class="form-group">
-                        <label for="escalonadoParaManobra">Escalonado para:</label>
-                        <input type="text" id="escalonadoParaManobra" placeholder="Nome da equipe/pessoa">
-                    </div>
-                `;
-                campoEscalonado.classList.remove('hidden');
+            if (checkbox.checked) {
+                input.classList.remove('hidden');
             } else {
-                const escalonadoNao = document.getElementById('escalonado_nao_m');
-                if (escalonadoNao && escalonadoNao.checked) {
-                    campoEscalonado.innerHTML = `
-                        <div class="form-group">
-                            <label for="motivoNaoEscalonadoManobra">Motivo:</label>
-                            <select id="motivoNaoEscalonadoManobra">
-                                <option value="">-- Selecione --</option>
-                                <option value="FORA DO HORÁRIO">Fora do horário</option>
-                                <option value="LIGAÇÃO SEM SUCESSO">Ligação sem sucesso</option>
-                            </select>
-                        </div>
-                    `;
-                    campoEscalonado.classList.remove('hidden');
-                } else {
-                    campoEscalonado.classList.add('hidden');
-                }
+                input.classList.add('hidden');
+                input.value = '';
             }
         }
 
@@ -1175,7 +1159,7 @@
                 campoScan.innerHTML = `
                     <div class="form-group">
                         <label for="metragemScanManobra">Metragem do Scan:</label>
-                        <input type="text" id="metragemScanManobra" placeholder="Ex: 1500m">
+                        <input type="text" id="metragemScanManobra" placeholder="Ex: 1500M">
                     </div>
                 `;
                 campoScan.classList.remove('hidden');
@@ -1243,6 +1227,12 @@
                 return;
             }
 
+            const tipoImpactoElement = document.querySelector('input[name="tipoImpacto"]:checked');
+            if (!tipoImpactoElement) {
+                alert('Por favor, selecione se o incidente tem impacto ou não');
+                return;
+            }
+
             const impactoValor = document.getElementById('impacto').value;
             verificarEscalonamento(topologia, impactoValor);
 
@@ -1269,14 +1259,26 @@
 
             const get = id => document.getElementById(id)?.value.toUpperCase() || '';
             const alertaImpacto = verificarAlertaImpacto(topologia, impactoValor);
+            const tipoImpactoTexto = tipoImpactoElement.value === 'com' ? 'COM IMPACTO' : 'SEM IMPACTO';
 
-            let msg = `## ROMPIMENTO DE FIBRA RESIDENCIAL\n`;
+            let msg = `## COP REDE INFORMA: INCIDENTE ${tipoImpactoTexto}
+## ROMPIMENTO DE FIBRA RESIDENCIAL\n`;
             msg += `## TOPOLOGIA: ${get('topologia')}\n`;
             msg += `## INCIDENTE: ${get('incidente')}\n`;
             msg += `## CIDADE/CLUSTER: ${get('cidade')}\n`;
             msg += `## ÁREA/DISTRITO: ${get('distrito')}\n`;
             msg += `## IMPACTO: ${get('impacto')}${alertaImpacto}\n`;
             msg += `## BASE AFETADA: ${get('base')}\n`;
+
+            const recValue = parseInt(get('rec'));
+            const ralValue = parseInt(get('ral'));
+            if (!isNaN(recValue) && recValue >= 1) {
+                msg += `## REC: ${recValue}\n`;
+            }
+            if (!isNaN(ralValue) && ralValue >= 1) {
+                msg += `## RAL: ${ralValue}\n`;
+            }
+
             msg += `## DATA E HORA DE ABERTURA: ${get('abertura')}\n`;
             msg += `## PREVISÃO DO OUTAGE: ${get('previsao')}\n`;
             msg += `## DATA E HORA DE ACIONAMENTO: ${get('acionamento') || 'AGUARDANDO DISPONIBILIDADE TÉCNICA'}\n`;
@@ -1284,55 +1286,82 @@
             
             if (tipoStatus === 'inicial') {
                 const acionado = document.querySelector('input[name="acionado"]:checked');
-                const escalonado = document.querySelector('input[name="escalonado"]:checked');
                 const scan = document.querySelector('input[name="scan"]:checked');
                 const equipe = document.querySelector('input[name="equipe"]:checked');
-
-                msg += `## INFORMAÇÕES INICIAIS:\n`;
-                msg += `INCIDENTE ACIONADO: ${acionado ? acionado.value.toUpperCase() : 'NÃO INFORMADO'}\n`;
                 
-                if (escalonado) {
-                    if (escalonado.value === 'sim') {
-                        const escalonadoPara = get('escalonadoPara');
-                        msg += `FOI ESCALONADO: SIM - PARA ${escalonadoPara}\n`;
-                    } else {
-                        const motivo = document.getElementById('motivoNaoEscalonado')?.value || '';
-                        msg += `FOI ESCALONADO: NÃO - ${motivo}\n`;
-                    }
+                let statusInfo = [];
+                
+                if (acionado && acionado.value === 'sim') {
+                    statusInfo.push('EQUIPE FO ACIONADA');
                 }
                 
-                if (scan) {
-                    if (scan.value === 'sim') {
-                        const metragem = get('metragemScan');
-                        msg += `HOUVE SCAN: SIM - ${metragem}\n`;
-                    } else {
-                        msg += `HOUVE SCAN: NÃO\n`;
-                    }
+                const escalonamentos = [];
+                if (document.getElementById('esc_ponto_focal')?.checked) {
+                    const nome = get('esc_ponto_focal_nome');
+                    escalonamentos.push(nome ? `PONTO FOCAL ${nome}` : 'PONTO FOCAL');
+                }
+                if (document.getElementById('esc_supervisor')?.checked) {
+                    const nome = get('esc_supervisor_nome');
+                    escalonamentos.push(nome ? `SUPERVISOR ${nome}` : 'SUPERVISOR');
+                }
+                if (document.getElementById('esc_coordenador')?.checked) {
+                    const nome = get('esc_coordenador_nome');
+                    escalonamentos.push(nome ? `COORDENADOR ${nome}` : 'COORDENADOR');
+                }
+                if (document.getElementById('esc_gerente')?.checked) {
+                    const nome = get('esc_gerente_nome');
+                    escalonamentos.push(nome ? `GERENTE ${nome}` : 'GERENTE');
                 }
                 
-                if (equipe) {
-                    if (equipe.value === 'sim') {
-                        const motivo = document.getElementById('motivoEquipe')?.value || '';
-                        msg += `FICARÁ AOS CUIDADOS DA EQUIPE DA MANHÃ: SIM - ${motivo}\n`;
-                    } else {
-                        msg += `FICARÁ AOS CUIDADOS DA EQUIPE DA MANHÃ: NÃO\n`;
-                    }
+                if (escalonamentos.length > 0) {
+                    statusInfo.push(`ESCALONADO: ${escalonamentos.join(', ')}`);
+                }
+                
+                if (scan && scan.value === 'sim') {
+                    const metragem = get('metragemScan');
+                    statusInfo.push(`EFETUADO SCAN: ${metragem}`);
+                }
+                
+                if (equipe && equipe.value === 'sim') {
+                    const motivo = document.getElementById('motivoEquipe')?.value || '';
+                    statusInfo.push(`INCIDENTE AOS CUIDADOS DA EQUIPE DA MANHÃ. MOTIVO: ${motivo}`);
+                }
+                
+                if (statusInfo.length > 0) {
+                    msg += statusInfo.join('. ') + '.\n';
                 }
             } else if (tipoStatus === 'atualizacao') {
-                const avaliando = document.querySelector('input[name="avaliando"]:checked');
                 const percorrendo = document.querySelector('input[name="percorrendo"]:checked');
+                const avaliando = document.querySelector('input[name="avaliando"]:checked');
+                const endereco = get('enderecoDano');
+                const causa = get('causaDano');
+                const cabos = get('cabosAfetados');
+                const percentual = get('validado');
                 
-                msg += `## ENDEREÇO DO DANO: ${get('enderecoDano')}\n`;
-                msg += `## CAUSA DO DANO: ${get('causaDano')}\n`;
-                msg += `## EQUIPE AVALIANDO INFRA: ${avaliando ? avaliando.value.toUpperCase() : 'NÃO INFORMADO'}\n`;
-                msg += `## EQUIPE PERCORRENDO ROTA: ${percorrendo ? percorrendo.value.toUpperCase() : 'NÃO INFORMADO'}\n`;
-                msg += `## PERCENTUAL DE NODES NORMALIZADOS: ${get('validado')}%\n`;
+                let statusInfo = [];
+                
+                if (endereco && causa && cabos) {
+                    statusInfo.push(`LOCALIZADO DANO EM ${endereco}, OCASIONADO POR ${causa}, AFETANDO CABOS DE ${cabos}`);
+                }
+                
+                if (percorrendo && percorrendo.value === 'sim') {
+                    statusInfo.push('EQUIPE SEGUE PERCORRENDO ROTA');
+                }
+                
+                if (avaliando && avaliando.value === 'sim') {
+                    statusInfo.push('EQUIPE SEGUE AVALIANDO INFRAESTRUTURA NO LOCAL');
+                }
+                
+                if (percentual && parseInt(percentual) > 0) {
+                    statusInfo.push(`PERCENTUAL DE NODES NORMALIZADOS: ${percentual}%`);
+                }
+                
+                if (statusInfo.length > 0) {
+                    msg += statusInfo.join('. ') + '.\n';
+                }
             } else if (tipoStatus === 'encerramento') {
                 msg += `## DATA E HORA DE ENCERRAMENTO: ${get('encerramento')}\n`;
-                msg += `## FCA (FATO, CAUSA, AÇÃO):\n`;
-                msg += `FATO: ${get('fato')}\n`;
-                msg += `CAUSA: ${get('causa')}\n`;
-                msg += `AÇÃO: ${get('acao')}\n`;
+                msg += `FATO: ${get('fato')}. CAUSA: ${get('causa')}. AÇÃO: ${get('acao')}.\n`;
                 msg += `\n✅ SITUAÇÃO NORMALIZADA - SERVIÇO CONCLUÍDO COM SUCESSO`;
             }
             
@@ -1350,6 +1379,12 @@
             const tipoStatus = document.getElementById('statusManobra').value;
             if (!tipoStatus) {
                 alert('Por favor, selecione o tipo de status');
+                return;
+            }
+
+            const tipoImpactoElement = document.querySelector('input[name="tipoImpactoManobra"]:checked');
+            if (!tipoImpactoElement) {
+                alert('Por favor, selecione se o incidente tem impacto ou não');
                 return;
             }
 
@@ -1377,8 +1412,10 @@
             const get = id => document.getElementById(id)?.value.toUpperCase() || '';
             const impactoManobraValor = document.getElementById('impactoManobra').value;
             const alertaImpactoManobra = verificarAlertaImpacto(topologiaManobra, impactoManobraValor);
+            const tipoImpactoTexto = tipoImpactoElement.value === 'com' ? 'COM IMPACTO' : 'SEM IMPACTO';
 
-            let msg = `## MANOBRA DE FIBRA RESIDENCIAL\n`;
+            let msg = `## COP REDE INFORMA: INCIDENTE ${tipoImpactoTexto}
+## MANOBRA DE FIBRA RESIDENCIAL\n`;
             msg += `## TOPOLOGIA: ${get('topologiaManobra')}\n`;
             msg += `## TICKET DA MANOBRA: ${get('ticketManobra')}\n`;
             msg += `## INCIDENTE: ${get('incidenteManobra')}\n`;
@@ -1393,53 +1430,24 @@
             msg += `## TIPO DE STATUS: ${document.getElementById('statusManobra').options[document.getElementById('statusManobra').selectedIndex].text.toUpperCase()}\n`;
             
             if (tipoStatus === 'inicial') {
-                const acionado = document.querySelector('input[name="acionado_m"]:checked');
-                const escalonado = document.querySelector('input[name="escalonado_m"]:checked');
-                const scan = document.querySelector('input[name="scan_m"]:checked');
-                const equipe = document.querySelector('input[name="equipe_m"]:checked');
-
-                msg += `## INFORMAÇÕES INICIAIS:\n`;
-                msg += `INCIDENTE ACIONADO: ${acionado ? acionado.value.toUpperCase() : 'NÃO INFORMADO'}\n`;
+                const manobraIniciada = document.querySelector('input[name="manobra_iniciada"]:checked');
                 
-                if (escalonado) {
-                    if (escalonado.value === 'sim') {
-                        const escalonadoPara = get('escalonadoParaManobra');
-                        msg += `FOI ESCALONADO: SIM - PARA ${escalonadoPara}\n`;
-                    } else {
-                        const motivo = document.getElementById('motivoNaoEscalonadoManobra')?.value || '';
-                        msg += `FOI ESCALONADO: NÃO - ${motivo}\n`;
-                    }
-                }
-                
-                if (scan) {
-                    if (scan.value === 'sim') {
-                        const metragem = get('metragemScanManobra');
-                        msg += `HOUVE SCAN: SIM - ${metragem}\n`;
-                    } else {
-                        msg += `HOUVE SCAN: NÃO\n`;
-                    }
-                }
-                
-                if (equipe) {
-                    if (equipe.value === 'sim') {
-                        const motivo = document.getElementById('motivoEquipeManobra')?.value || '';
-                        msg += `FICARÁ AOS CUIDADOS DA EQUIPE DA MANHÃ: SIM - ${motivo}\n`;
-                    } else {
-                        msg += `FICARÁ AOS CUIDADOS DA EQUIPE DA MANHÃ: NÃO\n`;
-                    }
+                if (manobraIniciada && manobraIniciada.value === 'sim') {
+                    msg += `MANOBRA INICIADA.\n`;
                 }
             } else if (tipoStatus === 'atualizacao') {
-                const avaliando = document.querySelector('input[name="avaliando_m"]:checked');
-                const percorrendo = document.querySelector('input[name="percorrendo_m"]:checked');
+                const percentual = get('validadoManobra');
+                const atualizacao = get('atualizacaoManobra');
                 
-                msg += `## ENDEREÇO DO DANO: ${get('enderecoDanoManobra')}\n`;
-                msg += `## CAUSA DO DANO: ${get('causaDanoManobra')}\n`;
-                msg += `## EQUIPE AVALIANDO INFRA: ${avaliando ? avaliando.value.toUpperCase() : 'NÃO INFORMADO'}\n`;
-                msg += `## EQUIPE PERCORRENDO ROTA: ${percorrendo ? percorrendo.value.toUpperCase() : 'NÃO INFORMADO'}\n`;
-                msg += `## PERCENTUAL DE NODES NORMALIZADOS: ${get('validadoManobra')}%\n`;
+                if (percentual && parseInt(percentual) > 0) {
+                    msg += `PERCENTUAL DE NODES NORMALIZADOS: ${percentual}%\n`;
+                }
+                
+                if (atualizacao) {
+                    msg += `${atualizacao}\n`;
+                }
             } else if (tipoStatus === 'encerramento') {
                 msg += `## DATA E HORA DE ENCERRAMENTO: ${get('encerramentoManobra')}\n`;
-                msg += `## FCA (FATO, CAUSA, AÇÃO):\n`;
                 msg += `FATO: ${get('fatoManobra')}\n`;
                 msg += `CAUSA: ${get('causaManobra')}\n`;
                 msg += `AÇÃO: ${get('acaoManobra')}\n`;
@@ -1474,4 +1482,3 @@
     </script>
 </body>
 </html>
-            msg += `
