@@ -1161,8 +1161,20 @@
                 document.getElementById('formManobra').classList.remove('hidden');
             }
             
-            // Mostrar botão salvar ao trocar tipo de mensagem (pode ser novo incidente)
-            controlarBotaoSalvar(false);
+            // Ao selecionar tipo de mensagem, entender como NOVO incidente
+            if (tipo) {
+                // Limpar campo do número do incidente
+                document.getElementById('incidenteId').value = '';
+                
+                // Limpar todos os formulários
+                limparFormularios();
+                
+                // Resetar variável de incidente atual
+                incidenteAtual = null;
+                
+                // Mostrar botão salvar (novo incidente)
+                controlarBotaoSalvar(false);
+            }
         }
 
         function limparFormularios() {
