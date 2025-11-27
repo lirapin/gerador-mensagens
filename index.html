@@ -414,8 +414,8 @@
             
             <div class="form-group">
                 <label>Incidentes Ativos:</label>
-                <button class="expand-btn" onclick="toggleExpandirLista()">
-                    <i class="fas fa-expand-alt"></i> <span id="expandText">Expandir Lista</span>
+                <button class="expand-btn" onclick="toggleExpandirLista()" title="Expandir/Recolher lista">
+                    <i class="fas fa-expand-alt" id="expandIcon"></i>
                 </button>
                 <div class="incident-list" id="incidentList">
                     <div class="no-incidents">Nenhum incidente ativo</div>
@@ -849,17 +849,14 @@
         // =============================================
         function toggleExpandirLista() {
             const incidentList = document.getElementById('incidentList');
-            const expandText = document.getElementById('expandText');
-            const btn = event.target.closest('.expand-btn');
+            const expandIcon = document.getElementById('expandIcon');
             
             if (incidentList.classList.contains('expanded')) {
                 incidentList.classList.remove('expanded');
-                expandText.textContent = 'Expandir Lista';
-                btn.innerHTML = '<i class="fas fa-expand-alt"></i> <span id="expandText">Expandir Lista</span>';
+                expandIcon.className = 'fas fa-expand-alt';
             } else {
                 incidentList.classList.add('expanded');
-                expandText.textContent = 'Recolher Lista';
-                btn.innerHTML = '<i class="fas fa-compress-alt"></i> <span id="expandText">Recolher Lista</span>';
+                expandIcon.className = 'fas fa-compress-alt';
             }
         }
 
@@ -920,6 +917,14 @@
                 return;
             }
 
+            // Verificar qual é o status selecionado
+            let tipoStatus = '';
+            if (tipoMensagem === 'rompimento') {
+                tipoStatus = document.getElementById('status').value;
+            } else if (tipoMensagem === 'manobra') {
+                tipoStatus = document.getElementById('statusManobra').value;
+            }
+
             let incidenteId = document.getElementById('incidenteId').value.trim();
             if (!incidenteId) {
                 incidenteId = prompt('Insira o número do incidente:');
@@ -927,17 +932,19 @@
                 document.getElementById('incidenteId').value = incidenteId;
             }
 
-            // Verificar se o incidente já existe
-            try {
-                const todosIncidentes = await jsonBinService.buscarTodosIncidentes();
-                const incidenteExistente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
-                
-                if (incidenteExistente) {
-                    alert('❌ ERRO: Este incidente já possui uma mensagem em andamento!\n\nNúmero do incidente: ' + incidenteId + '\nCriado por: ' + incidenteExistente.criado_por + '\n\nNão é possível criar mensagens duplicadas para o mesmo incidente.');
-                    return;
+            // Verificar se o incidente já existe APENAS se for status inicial
+            if (tipoStatus === 'inicial') {
+                try {
+                    const todosIncidentes = await jsonBinService.buscarTodosIncidentes();
+                    const incidenteExistente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
+                    
+                    if (incidenteExistente) {
+                        alert('❌ ERRO: Este incidente já possui uma mensagem em andamento!\n\nNúmero do incidente: ' + incidenteId + '\nCriado por: ' + incidenteExistente.criado_por + '\n\nPor favor, consulte a lista de incidentes ativos abaixo.');
+                        return;
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar incidentes existentes:', error);
                 }
-            } catch (error) {
-                console.error('Erro ao verificar incidentes existentes:', error);
             }
 
             const dados = coletarDadosFormulario(tipoMensagem);
@@ -1477,6 +1484,26 @@
                 return;
             }
 
+            // VALIDAÇÃO: Verificar se o incidente foi salvo
+            const incidenteId = document.getElementById('incidenteId').value.trim();
+            if (!incidenteId) {
+                alert('❌ Por favor, salve o incidente primeiro antes de gerar a mensagem!');
+                return;
+            }
+
+            // Verificar se o incidente existe no sistema
+            try {
+                const todosIncidentes = await jsonBinService.buscarTodosIncidentes();
+                const incidenteExistente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
+                
+                if (!incidenteExistente) {
+                    alert('❌ Este incidente ainda não foi salvo!\n\nPor favor, clique em "Salvar Incidente" antes de gerar a mensagem.');
+                    return;
+                }
+            } catch (error) {
+                console.error('Erro ao verificar incidente:', error);
+            }
+
             const impactoValor = document.getElementById('impacto').value;
             verificarEscalonamento(topologia, impactoValor, tipoStatus);
 
@@ -1655,6 +1682,26 @@
             if (!tipoImpactoElement) {
                 alert('Por favor, selecione se o incidente tem impacto ou não');
                 return;
+            }
+
+            // VALIDAÇÃO: Verificar se o incidente foi salvo
+            const incidenteId = document.getElementById('incidenteId').value.trim();
+            if (!incidenteId) {
+                alert('❌ Por favor, salve o incidente primeiro antes de gerar a mensagem!');
+                return;
+            }
+
+            // Verificar se o incidente existe no sistema
+            try {
+                const todosIncidentes = await jsonBinService.buscarTodosIncidentes();
+                const incidenteExistente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
+                
+                if (!incidenteExistente) {
+                    alert('❌ Este incidente ainda não foi salvo!\n\nPor favor, clique em "Salvar Incidente" antes de gerar a mensagem.');
+                    return;
+                }
+            } catch (error) {
+                console.error('Erro ao verificar incidente:', error);
             }
 
             const camposDataHora = [];
