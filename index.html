@@ -541,8 +541,8 @@
             <div id="statusCampos"></div>
 
             <div class="button-group">
-                <button onclick="gerarMensagem()"><i class="fas fa-file-alt"></i> Gerar Mensagem</button>
                 <button onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
+                <button onclick="gerarMensagem()"><i class="fas fa-file-alt"></i> Gerar Mensagem</button>
             </div>
         </div>
 
@@ -643,8 +643,8 @@
             <div id="statusCamposManobra"></div>
 
             <div class="button-group">
-                <button onclick="gerarMensagemManobra()"><i class="fas fa-file-alt"></i> Gerar Mensagem</button>
                 <button onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
+                <button onclick="gerarMensagemManobra()"><i class="fas fa-file-alt"></i> Gerar Mensagem</button>
             </div>
         </div>
 
@@ -956,8 +956,8 @@
                 await atualizarListaIncidentes();
                 alert('✅ Incidente ' + incidenteId + ' salvo e COMPARTILHADO com todos os usuários!');
                 
-                // Limpar campo para evitar confusão ao cadastrar próximo incidente
-                document.getElementById('incidenteId').value = '';
+                // Carregar automaticamente o incidente que acabou de ser salvo (modo silencioso - sem alerta)
+                await carregarIncidentePorId(incidenteId, true);
             } catch (error) {
                 alert('⚠️ Incidente salvo localmente (sem compartilhamento)');
             }
@@ -972,7 +972,7 @@
             await carregarIncidentePorId(incidenteId);
         }
 
-        async function carregarIncidentePorId(incidenteId) {
+        async function carregarIncidentePorId(incidenteId, silencioso = false) {
             try {
                 const incidente = await jsonBinService.carregarIncidente(incidenteId);
                 document.getElementById('incidenteId').value = incidente.incidente_id;
@@ -1007,7 +1007,11 @@
 
                 incidenteAtual = incidente.incidente_id;
                 await atualizarListaIncidentes();
-                alert('✅ Incidente carregado do servidor compartilhado!');
+                
+                // Só mostrar alerta se não for chamada silenciosa
+                if (!silencioso) {
+                    alert('✅ Incidente carregado do servidor compartilhado!');
+                }
             } catch (error) {
                 alert('❌ Erro ao carregar incidente: ' + error.message);
             }
