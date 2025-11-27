@@ -954,7 +954,10 @@
                 await jsonBinService.salvarIncidente(incidenteId, tipoMensagem, dados);
                 incidenteAtual = incidenteId;
                 await atualizarListaIncidentes();
-                alert('✅ Incidente salvo e COMPARTILHADO com todos os usuários!');
+                alert('✅ Incidente ' + incidenteId + ' salvo e COMPARTILHADO com todos os usuários!');
+                
+                // Limpar campo para evitar confusão ao cadastrar próximo incidente
+                document.getElementById('incidenteId').value = '';
             } catch (error) {
                 alert('⚠️ Incidente salvo localmente (sem compartilhamento)');
             }
