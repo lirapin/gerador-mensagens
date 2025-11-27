@@ -541,7 +541,7 @@
             <div id="statusCampos"></div>
 
             <div class="button-group">
-                <button id="btnSalvarRompimento" onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
+                <button onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
                 <button onclick="gerarMensagem()"><i class="fas fa-file-alt"></i> Gerar Mensagem</button>
             </div>
         </div>
@@ -643,7 +643,7 @@
             <div id="statusCamposManobra"></div>
 
             <div class="button-group">
-                <button id="btnSalvarManobra" onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
+                <button onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
                 <button onclick="gerarMensagemManobra()"><i class="fas fa-file-alt"></i> Gerar Mensagem</button>
             </div>
         </div>
@@ -861,24 +861,6 @@
         }
 
         // =============================================
-        // CONTROLE DE VISIBILIDADE DO BOTÃO SALVAR
-        // =============================================
-        function controlarBotaoSalvar(incidenteCarregado = false) {
-            const btnSalvarRompimento = document.getElementById('btnSalvarRompimento');
-            const btnSalvarManobra = document.getElementById('btnSalvarManobra');
-            
-            if (incidenteCarregado) {
-                // Incidente já foi salvo antes - ocultar botão
-                if (btnSalvarRompimento) btnSalvarRompimento.classList.add('hidden');
-                if (btnSalvarManobra) btnSalvarManobra.classList.add('hidden');
-            } else {
-                // Incidente novo - mostrar botão
-                if (btnSalvarRompimento) btnSalvarRompimento.classList.remove('hidden');
-                if (btnSalvarManobra) btnSalvarManobra.classList.remove('hidden');
-            }
-        }
-
-        // =============================================
         // FUNÇÃO DE LIMPEZA AUTOMÁTICA
         // =============================================
         async function limparIncidentesExpirados() {
@@ -935,34 +917,11 @@
                 return;
             }
 
-            // Verificar qual é o status selecionado
-            let tipoStatus = '';
-            if (tipoMensagem === 'rompimento') {
-                tipoStatus = document.getElementById('status').value;
-            } else if (tipoMensagem === 'manobra') {
-                tipoStatus = document.getElementById('statusManobra').value;
-            }
-
             let incidenteId = document.getElementById('incidenteId').value.trim();
             if (!incidenteId) {
                 incidenteId = prompt('Insira o número do incidente:');
                 if (!incidenteId) return;
                 document.getElementById('incidenteId').value = incidenteId;
-            }
-
-            // Verificar se o incidente já existe APENAS se for status inicial
-            if (tipoStatus === 'inicial') {
-                try {
-                    const todosIncidentes = await jsonBinService.buscarTodosIncidentes();
-                    const incidenteExistente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
-                    
-                    if (incidenteExistente) {
-                        alert('❌ ERRO: Este incidente já possui uma mensagem em andamento!\n\nNúmero do incidente: ' + incidenteId + '\nCriado por: ' + incidenteExistente.criado_por + '\n\nPor favor, consulte a lista de incidentes ativos abaixo.');
-                        return;
-                    }
-                } catch (error) {
-                    console.error('Erro ao verificar incidentes existentes:', error);
-                }
             }
 
             const dados = coletarDadosFormulario(tipoMensagem);
@@ -1025,9 +984,6 @@
 
                 incidenteAtual = incidente.incidente_id;
                 await atualizarListaIncidentes();
-                
-                // Ocultar botão salvar pois o incidente já foi salvo anteriormente
-                controlarBotaoSalvar(true);
                 
                 // Só mostrar alerta se não for chamada silenciosa
                 if (!silencioso) {
@@ -1159,21 +1115,6 @@
                 document.getElementById('formRompimento').classList.remove('hidden');
             } else if (tipo === 'manobra') {
                 document.getElementById('formManobra').classList.remove('hidden');
-            }
-            
-            // Ao selecionar tipo de mensagem, entender como NOVO incidente
-            if (tipo) {
-                // Limpar campo do número do incidente
-                document.getElementById('incidenteId').value = '';
-                
-                // Limpar todos os formulários
-                limparFormularios();
-                
-                // Resetar variável de incidente atual
-                incidenteAtual = null;
-                
-                // Mostrar botão salvar (novo incidente)
-                controlarBotaoSalvar(false);
             }
         }
 
@@ -1527,26 +1468,6 @@
                 return;
             }
 
-            // VALIDAÇÃO: Verificar se o incidente foi salvo
-            const incidenteId = document.getElementById('incidenteId').value.trim();
-            if (!incidenteId) {
-                alert('❌ Por favor, salve o incidente primeiro antes de gerar a mensagem!');
-                return;
-            }
-
-            // Verificar se o incidente existe no sistema
-            try {
-                const todosIncidentes = await jsonBinService.buscarTodosIncidentes();
-                const incidenteExistente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
-                
-                if (!incidenteExistente) {
-                    alert('❌ Este incidente ainda não foi salvo!\n\nPor favor, clique em "Salvar Incidente" antes de gerar a mensagem.');
-                    return;
-                }
-            } catch (error) {
-                console.error('Erro ao verificar incidente:', error);
-            }
-
             const impactoValor = document.getElementById('impacto').value;
             verificarEscalonamento(topologia, impactoValor, tipoStatus);
 
@@ -1725,26 +1646,6 @@
             if (!tipoImpactoElement) {
                 alert('Por favor, selecione se o incidente tem impacto ou não');
                 return;
-            }
-
-            // VALIDAÇÃO: Verificar se o incidente foi salvo
-            const incidenteId = document.getElementById('incidenteId').value.trim();
-            if (!incidenteId) {
-                alert('❌ Por favor, salve o incidente primeiro antes de gerar a mensagem!');
-                return;
-            }
-
-            // Verificar se o incidente existe no sistema
-            try {
-                const todosIncidentes = await jsonBinService.buscarTodosIncidentes();
-                const incidenteExistente = todosIncidentes.find(inc => inc.incidente_id === incidenteId);
-                
-                if (!incidenteExistente) {
-                    alert('❌ Este incidente ainda não foi salvo!\n\nPor favor, clique em "Salvar Incidente" antes de gerar a mensagem.');
-                    return;
-                }
-            } catch (error) {
-                console.error('Erro ao verificar incidente:', error);
             }
 
             const camposDataHora = [];
