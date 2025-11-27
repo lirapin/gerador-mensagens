@@ -541,7 +541,7 @@
             <div id="statusCampos"></div>
 
             <div class="button-group">
-                <button onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
+                <button id="btnSalvarRompimento" onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
                 <button onclick="gerarMensagem()"><i class="fas fa-file-alt"></i> Gerar Mensagem</button>
             </div>
         </div>
@@ -643,7 +643,7 @@
             <div id="statusCamposManobra"></div>
 
             <div class="button-group">
-                <button onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
+                <button id="btnSalvarManobra" onclick="salvarIncidente()" class="btn-copy"><i class="fas fa-save"></i> Salvar Incidente</button>
                 <button onclick="gerarMensagemManobra()"><i class="fas fa-file-alt"></i> Gerar Mensagem</button>
             </div>
         </div>
@@ -861,6 +861,24 @@
         }
 
         // =============================================
+        // CONTROLE DE VISIBILIDADE DO BOTÃO SALVAR
+        // =============================================
+        function controlarBotaoSalvar(incidenteCarregado = false) {
+            const btnSalvarRompimento = document.getElementById('btnSalvarRompimento');
+            const btnSalvarManobra = document.getElementById('btnSalvarManobra');
+            
+            if (incidenteCarregado) {
+                // Incidente já foi salvo antes - ocultar botão
+                if (btnSalvarRompimento) btnSalvarRompimento.classList.add('hidden');
+                if (btnSalvarManobra) btnSalvarManobra.classList.add('hidden');
+            } else {
+                // Incidente novo - mostrar botão
+                if (btnSalvarRompimento) btnSalvarRompimento.classList.remove('hidden');
+                if (btnSalvarManobra) btnSalvarManobra.classList.remove('hidden');
+            }
+        }
+
+        // =============================================
         // FUNÇÃO DE LIMPEZA AUTOMÁTICA
         // =============================================
         async function limparIncidentesExpirados() {
@@ -1008,6 +1026,9 @@
                 incidenteAtual = incidente.incidente_id;
                 await atualizarListaIncidentes();
                 
+                // Ocultar botão salvar pois o incidente já foi salvo anteriormente
+                controlarBotaoSalvar(true);
+                
                 // Só mostrar alerta se não for chamada silenciosa
                 if (!silencioso) {
                     alert('✅ Incidente carregado do servidor compartilhado!');
@@ -1139,6 +1160,9 @@
             } else if (tipo === 'manobra') {
                 document.getElementById('formManobra').classList.remove('hidden');
             }
+            
+            // Mostrar botão salvar ao trocar tipo de mensagem (pode ser novo incidente)
+            controlarBotaoSalvar(false);
         }
 
         function limparFormularios() {
